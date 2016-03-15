@@ -3,15 +3,15 @@
 
 
 ## Functions
- - ### Essentials
-    1. `zeros(double **A,unsigned m, unsigned n)`
+ - Essentials
+    - `zeros(double **A,unsigned m, unsigned n)`
         - **Dependencies**: _None_
         - **Input**:
             -  `double **A` : _The address of the matrix_.
             -  `unsigned m` : _The number of rows of the matrix_.
             -  `unsigned n` : _The number of columns of the matrix_.  
         - **Brief**: This is used to create a matrix full of zeros. Can be used as a basic initialization function. _Caution_: The matrix should already be allocated memory, that is the assumption of this subroutine.
-    1. `ones(double **A,unsigned m, unsigned n)`
+    - `ones(double **A,unsigned m, unsigned n)`
         - **Dependencies**: _None_
         - **Input**:
             -  `double **A` : _The address of the matrix_.
