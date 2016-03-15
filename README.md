@@ -1,7 +1,8 @@
 # Discontinuous Galerkin
  This repository contains the _operators_ which form an integral part of the **Discontinuous Galerkin methods**. The focus is to make it usable for fluid dynamics.
 
- ## Functions
+
+## Functions
  - ### Essentials
     1. `zeros(double **A,unsigned m, unsigned n)`
         - **Dependencies**: _None_
