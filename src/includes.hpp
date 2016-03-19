@@ -1,3 +1,5 @@
 #include "Utilities/Display.hpp"
 #include "Utilities/Ones.hpp"
 #include "Utilities/Zeros.hpp"
+#include "Utilities/SolveAxb.hpp"
+#include "Utilities/Inverse.hpp"
