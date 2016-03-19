@@ -37,7 +37,7 @@
             - `unsigned N` : _The number of equations which are to be solved simultaneously._  
             - **Brief**: This is used to solve the linear system `Ax=b`. The solution is stored in the address provided by `double *x`.
         - **Usage**: `solveAxb(&A[0][0],x,b,3)`, where `A` is a statically declared 2-D array with dimensions `3x3`, and `b` and `x` are already defined arrays of size `3`.
-    - `solveAxb(double *A, double *Ainv, unsigned N)`
+    - `inverse(double *A, double *Ainv, unsigned N)`
         - **Dependencies**: _None_
         - **Input**:
             -  `double *A` : _The pointer to the first element of the matrix whose inverse is to be found out_.
