@@ -3,7 +3,7 @@
 #include <cstdio>
 
 #ifndef Inverse_HPP
-#define Inverse _HPP
+#define Inverse_HPP
 
 void inverse(double *A, double *Ainv,unsigned N)
 {
