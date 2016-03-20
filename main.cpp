@@ -2,10 +2,13 @@
 
 int main()
 {
-    int N =5;
-    double poly[N+1];
-    legendrePolynomial(poly,N);
-    display(poly,N+1);
+    double poly[4];
+    poly[0]=-9;
+    poly[1]=13.5;
+    poly[2]=-6.5;
+    poly[3]=1;
+    syntheticDivision(poly,4,1.5); 
+    display(poly,3);
 
 
 

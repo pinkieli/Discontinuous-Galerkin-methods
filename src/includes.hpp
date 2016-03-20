@@ -7,3 +7,4 @@
 #include "Utilities/PolyDeriv.hpp"
 #include "Utilities/Inverse.hpp"
 #include "Utilities/LegendrePolynomial.hpp"
+#include "Utilities/SyntheticDivision.cpp"
