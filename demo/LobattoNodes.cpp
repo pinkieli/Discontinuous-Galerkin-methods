@@ -3,8 +3,12 @@
 int main()
 {
     unsigned N = 6;
-    double Weights[N];
-    lobattoWeights(Weights,N);
-    display(Weights,N);
+    double nodes[N];
+    lobattoNodes(nodes,N);
+    display(nodes,N);
+
+
+
+
     return 0;
 }

@@ -15,3 +15,4 @@ using namespace std;
 #include "Utilities/SyntheticDivision.hpp"
 #include "Utilities/NewtonRaphson.hpp"
 #include "Utilities/LobattoNodes.hpp"
+#include "Utilities/LobattoWeights.hpp"
