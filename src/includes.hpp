@@ -12,6 +12,6 @@ using namespace std;
 #include "Utilities/PolyDeriv.hpp"
 #include "Utilities/Inverse.hpp"
 #include "Utilities/LegendrePolynomial.hpp"
-#include "Utilities/SyntheticDivision.cpp"
+#include "Utilities/SyntheticDivision.hpp"
 #include "Utilities/NewtonRaphson.hpp"
-
+#include "Utilities/LobattoNodes.hpp"
