@@ -18,3 +18,5 @@ using namespace std;
 #include "Utilities/LobattoNodes.hpp"
 #include "Utilities/LobattoWeights.hpp"
 #include "Utilities/LobattoIntegration.hpp"
+#include "Utilities/LagrangePolynomials.hpp"
+#include "Utilities/Transpose.hpp"
