@@ -1,5 +1,9 @@
 #include <lapacke.h>
 #include <functional>
+#include <cstring>
+#include "../Utilities/LagrangePolynomials.hpp"
+#include "../Utilities/PolyEval.hpp"
+#include "../Utilities/LobattoIntegration.hpp"
 
 using namespace std;
 
@@ -8,19 +12,27 @@ using namespace std;
 
 void massMatrix(double *MassMatrix,unsigned N)
 {
-    vector< vector<double> > MassMatrix;
-    vector< vector<double> > LagrangePolynomials = lagrangePolynomials(Points);
-    unsigned i,j;///Counters for the loop.
-    function<double(double)> eval;
-    for(i=0;i<n;i++)
-    {
+    double Poly[N+1][N+1];
+    double **poly;
+    poly   =   new double*[N+1];
+    lagrangePolynomials(*Poly,N);
+    unsigned i,j;
 
-        for(j=0;j<n;j++)
+    for(i=0;i<=N;i++)
+    {
+        poly[i] =   new double[N+1];
+        memcpy(poly[i],Poly[i],(N+1)*sizeof(double));
+    }
+
+    function<double(double)> eval;
+    for(i=0;i<=N;i++)
+    {
+        for(j=0;j<=N;j++)
         {
-            eval = [&LagrangePolynomials,&i,&j](double x){  return ((polyEval(LagrangePolynomials[i],x)*polyEval(LagrangePolynomials[j],x)));};
-            MassMatrix[i][j] = lobattoIntegration(start,end,n,eval);
+            eval = [&poly,&i,&j,&N](double x){return (((polyEval(poly[i],N,x))*(polyEval(poly[j],N,x))));};
+            MassMatrix[i*(N+1)+j] = lobattoIntegration(-1.0,1.0,N+1,eval);
         }
     }
+    return ;
 }
-
 #endif

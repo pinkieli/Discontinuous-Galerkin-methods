@@ -20,3 +20,5 @@ using namespace std;
 #include "Utilities/LobattoIntegration.hpp"
 #include "Utilities/LagrangePolynomials.hpp"
 #include "Utilities/Transpose.hpp"
+
+#include "Elemental/MassMatrix.hpp"
