@@ -1,5 +1,6 @@
 #include <functional>
 #include <cstdio>
+#include <cmath>
 using namespace std;
 
 
@@ -16,3 +17,4 @@ using namespace std;
 #include "Utilities/NewtonRaphson.hpp"
 #include "Utilities/LobattoNodes.hpp"
 #include "Utilities/LobattoWeights.hpp"
+#include "Utilities/LobattoIntegration.hpp"
