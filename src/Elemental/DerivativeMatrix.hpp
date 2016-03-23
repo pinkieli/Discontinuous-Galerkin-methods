@@ -43,8 +43,7 @@ void derivativeMatrix(double *DerivativeMatrix,unsigned N)
         delete[] poly[i];
         delete[] deriv[i];
     }
-
-
+    
     delete[] poly;
     delete[] deriv;
     return ;

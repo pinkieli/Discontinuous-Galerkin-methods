@@ -40,4 +40,20 @@ void massMatrix(double *MassMatrix,unsigned N)
     delete[] poly;
     return ;
 }
+
+void twoDMassMatrix(double *MassMatrix, unsigned N)
+{
+    double m[N+1][N+1];
+    massMatrix(*m,N);
+    unsigned i1,i2,j1,j2;
+
+    for(i1=0;i1<=N;i1++)
+        for(j1=0;j1<=N;j1++)
+            for(i2=0;i2<=N;i2++)
+                for(j2=0;j2<=N;j2++)
+                    MassMatrix[(i1*(N+1)+j1)*(N+1)*(N+1)+i2*(N+1)+j2] = m[i1][i2]*m[j1][j2];
+    return ;
+}
+
+
 #endif
