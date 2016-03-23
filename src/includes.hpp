@@ -22,3 +22,4 @@ using namespace std;
 #include "Utilities/Transpose.hpp"
 
 #include "Elemental/MassMatrix.hpp"
+#include "Elemental/DerivativeMatrix.hpp"
