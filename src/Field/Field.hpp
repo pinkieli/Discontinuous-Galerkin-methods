@@ -17,7 +17,7 @@ private:
     unsigned Nex,Ney,N;
     double L_start,L_end,H_start,H_end;
 
-    double ***ConsVariable;
+    double ***ConsVariable,***Rate;
     double ***X, ***Y;
     double ***U, ***V;
 
@@ -49,6 +49,14 @@ Field::Field(unsigned Nx, unsigned Ny, unsigned n)
         ConsVariable[i]    =   new double* [Nex];
         for(j=0;j<Nex;j++)
             ConsVariable[i][j]  =   new double[(N+1)*(N+1)];
+    }
+
+    Rate            =   new double** [Ney];
+    for( i = 0; i< Ney; i++)
+    {
+        Rate[i]     =   new double* [Nex];
+        for(j=0;j<Nex;j++)
+            Rate[i][j]      =   new double[(N+1)*(N+1)];
     }
 
     X    =   new double** [Ney];
@@ -202,10 +210,12 @@ void Field::solve()
     }
 
     /*HERE FLUX WILL DO THE CHANGES TO THE RHS USING THE PREVIOUS VALUE AND RHS*/
+    /*What I am planning right now is continue to build up the flux matrices as in the previous case and then figure out a way to deal with the non - contiguity.*/
+    /*OR there could be a way of iterating through the sides and getting the result like done by Giraldo.*/
 
-
-
-
+    for(i=0;i<Ney;i++)
+        for(j=0;j<Nex;j++)
+            cblas_dgemv(CblasRowMajor,CblasTrans,(N+1)*(N+1),(N+1)*(N+1),1,*MassInverse,(N+1)*(N+1),RHS[i][j],1,0,Rate[i][j],1);
 
     return ;
 }
