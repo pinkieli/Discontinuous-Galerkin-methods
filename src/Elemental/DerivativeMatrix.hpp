@@ -5,6 +5,7 @@
 #include "../Utilities/PolyEval.hpp"
 #include "../Utilities/PolyDeriv.hpp"
 #include "../Utilities/LobattoIntegration.hpp"
+#include "MassMatrix.hpp"
 
 using namespace std;
 
@@ -43,9 +44,44 @@ void derivativeMatrix(double *DerivativeMatrix,unsigned N)
         delete[] poly[i];
         delete[] deriv[i];
     }
-    
+
     delete[] poly;
     delete[] deriv;
     return ;
 }
+
+void twoDDerivativeMatrixX(double *DerivativeMatrix, unsigned N)
+{
+    double m[N+1][N+1];
+    double d[N+1][N+1];
+    derivativeMatrix(*d,N);
+    massMatrix(*m,N);
+
+    unsigned i1,i2,j1,j2;
+    for(i1=0;i1<=N;i1++)
+        for(j1=0;j1<=N;j1++)
+            for(i2=0;i2<=N;i2++)
+                for(j2=0;j2<=N;j2++)
+                    DerivativeMatrix[(i1*(N+1)+j1)*(N+1)*(N+1)+i2*(N+1)+j2] = m[i1][i2]*d[j1][j2];
+
+    return ;
+}
+
+void twoDDerivativeMatrixY(double *DerivativeMatrix, unsigned N)
+{
+    double m[N+1][N+1];
+    double d[N+1][N+1];
+    derivativeMatrix(*d,N);
+    massMatrix(*m,N);
+
+    unsigned i1,i2,j1,j2;
+    for(i1=0;i1<=N;i1++)
+        for(j1=0;j1<=N;j1++)
+            for(i2=0;i2<=N;i2++)
+                for(j2=0;j2<=N;j2++)
+                    DerivativeMatrix[(i1*(N+1)+j1)*(N+1)*(N+1)+i2*(N+1)+j2] = d[i1][i2]*m[j1][j2];
+
+    return ;
+}
+
 #endif
