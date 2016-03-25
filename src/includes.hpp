@@ -23,3 +23,4 @@ using namespace std;
 
 #include "Elemental/MassMatrix.hpp"
 #include "Elemental/DerivativeMatrix.hpp"
+#include "Elemental/FluxMatrix.hpp"
