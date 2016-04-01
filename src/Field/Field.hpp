@@ -8,6 +8,7 @@
 #include "../Utilities/Inverse.hpp"
 #include "../Utilities/Zeros.hpp"
 #include "../Utilities/Create.hpp"
+#include "../Utilities/Plot.hpp"
 #include "../Elemental/MassMatrix.hpp"
 #include "../Elemental/DerivativeMatrix.hpp"
 #include "../Elemental/FluxMatrix.hpp"
@@ -466,6 +467,8 @@ void Field::plotSolution(string s)
         CGY[0][j]    =2*CGY[0][j];
         CGY[Ney*N][j]=2*CGY[Ney*N][j];
     }
+
+    plot(*CGX,*CGY,*CG,Ney*N+1,Nex*N+1,s);
 
     return ;
 }
