@@ -20,6 +20,8 @@ using namespace std;
 #include "Utilities/LobattoIntegration.hpp"
 #include "Utilities/LagrangePolynomials.hpp"
 #include "Utilities/Transpose.hpp"
+#include "Utilities/Create.hpp"
+#include "Utilities/Plot.hpp"
 
 #include "Elemental/MassMatrix.hpp"
 #include "Elemental/DerivativeMatrix.hpp"

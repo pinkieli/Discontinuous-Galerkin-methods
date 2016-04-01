@@ -3,8 +3,11 @@
 #include <cstring>
 #include <cblas.h>
 #include <cmath>
+#include <string>
 #include "../Utilities/LobattoNodes.hpp"
 #include "../Utilities/Inverse.hpp"
+#include "../Utilities/Zeros.hpp"
+#include "../Utilities/Create.hpp"
 #include "../Elemental/MassMatrix.hpp"
 #include "../Elemental/DerivativeMatrix.hpp"
 #include "../Elemental/FluxMatrix.hpp"
@@ -17,11 +20,31 @@ using namespace std;
 #ifndef Field_HPP
 #define Field_HPP
 
+
+
 class Field
 {
 private:
+    /**
+    * Nex   : This denotes the number of elements in the X- direction.
+    * Ney   : This denotes the number of elements in the Y- direction.
+    * N     : This variable denotes the order of the polynomial.
+    * Note  : This code considers same order of polynomail approximation in both X- and Y- directions.
+    */
     unsigned Nex,Ney,N;
+
+    /**
+    * The variables listed below are for defining the domain of the problem.
+    * L_start: This denotes the X- co-ordinate of the starting point..
+    * L_end:   This denotes the X-coordinate of the ending point
+    * H_start: This denotes the Y- co-ordinate of the starting point..
+    * H_end:   This denotes the Y-coordinate of the ending point
+    */
+
     double L_start,L_end,H_start,H_end;
+    /**
+    * double ***ConsVariable: This variable is a dynamically allocated 3-D array for the Conservation variable on which the Hyperbolic equation is acting.
+    */
 
     double ***ConsVariable,***Rate,***RHS,***XFlux,***YFlux;
     double ***X, ***Y;
@@ -49,72 +72,22 @@ public:
     void operateFlux(double *,double *,double *,double *);
     void operateInvereseMass(double *);
     void copyField(double ***);
+    void plotSolution(string );
     void solve();
 };
 
 Field::Field(unsigned Nx, unsigned Ny, unsigned n)
 {
-    unsigned i,j;
     Nex =   Nx;
     Ney =   Ny;
     N   =   n;
-    ConsVariable    =   new double** [Ney];
-    for( i = 0; i< Ney; i++)
-    {
-        ConsVariable[i]    =   new double* [Nex];
-        for(j=0;j<Nex;j++)
-            ConsVariable[i][j]  =   new double[(N+1)*(N+1)];
-    }
-
-    Rate            =   new double** [Ney];
-    for( i = 0; i< Ney; i++)
-    {
-        Rate[i]     =   new double* [Nex];
-        for(j=0;j<Nex;j++)
-            Rate[i][j]      =   new double[(N+1)*(N+1)];
-    }
-
-    RHS            =   new double** [Ney];
-    for( i = 0; i< Ney; i++)
-    {
-        RHS[i]     =   new double* [Nex];
-        for(j=0;j<Nex;j++)
-            RHS[i][j]      =   new double[(N+1)*(N+1)];
-    }
-
-
-    XFlux           =   new double** [Ney];
-    for( i = 0; i< Ney; i++)
-    {
-        XFlux[i]    =   new double* [Nex];
-        for(j=0;j<Nex;j++)
-            XFlux[i][j]     =   new double[(N+1)*(N+1)];
-    }
-
-    YFlux           =   new double** [Ney];
-    for( i = 0; i< Ney; i++)
-    {
-        YFlux[i]    =   new double* [Nex];
-        for(j=0;j<Nex;j++)
-            YFlux[i][j]     =   new double[(N+1)*(N+1)];
-    }
-
-    X    =   new double** [Ney];
-    for( i = 0; i< Ney; i++)
-    {
-        X[i]    =   new double* [Nex];
-        for(j=0;j<Nex;j++)
-            X[i][j]  =   new double[(N+1)*(N+1)];
-    }
-
-    Y    =   new double** [Ney];
-    for( i = 0; i< Ney; i++)
-    {
-        Y[i]    =   new double* [Nex];
-        for(j=0;j<Nex;j++)
-            Y[i][j]  =   new double[(N+1)*(N+1)];
-    }
-
+    ConsVariable    =   create3D(Ney,Nex,(N+1)*(N+1));
+    Rate            =   create3D(Ney,Nex,(N+1)*(N+1));
+    RHS             =   create3D(Ney,Nex,(N+1)*(N+1));
+    XFlux           =   create3D(Ney,Nex,(N+1)*(N+1));
+    YFlux           =   create3D(Ney,Nex,(N+1)*(N+1));
+    X               =   create3D(Ney,Nex,(N+1)*(N+1));
+    Y               =   create3D(Ney,Nex,(N+1)*(N+1));
 }
 
 void Field::setDomain(double L1, double L2, double L3, double L4)
@@ -130,7 +103,6 @@ void Field::setDomain(double L1, double L2, double L3, double L4)
     double Nodes[N+1];
     lobattoNodes(Nodes,N+1);
 
-
     dx  =   (L_end-L_start)/Nex;
     dy  =   (H_end-H_start)/Ney;
 
@@ -140,15 +112,15 @@ void Field::setDomain(double L1, double L2, double L3, double L4)
     for( i = 0;i<Ney; i++)
     {
         Xstart  =   L_start;
-        Xend    =   L_end;
+        Xend    =   Xstart + dx;
         for( j=0 ; j<Nex; j++)
         {
             for(k1=0;k1<=N;k1++)
             {
                 for(k2=0;k2<=N;k2++)
                 {
-                    X[i][j][k1*(N+1)+k2]=Xstart + 0.5*dx*Nodes[k2];
-                    Y[i][j][k1*(N+1)+k2]=Ystart + 0.5*dy*Nodes[k1];
+                    X[i][j][k1*(N+1)+k2]=0.5*(Xstart+Xend) + 0.5*dx*Nodes[k2];
+                    Y[i][j][k1*(N+1)+k2]=0.5*(Ystart+Yend) + 0.5*dy*Nodes[k1];
                 }
             }
             Xstart+=dx;
@@ -224,7 +196,6 @@ void Field::computeLambda()
         for(k=0;k<=N;k++)
             Lambda  =   MAX(Lambda,ABS(V[i][j][k + N*(N+1) ]));
 
-
     return ;
 }
 
@@ -235,7 +206,7 @@ void Field::computeFlux(double ***f_preX, double ***f_preY )
     {
         for(j=0;j<Nex;j++)
         {
-            for(k=0;k<(N+1)*(N+1);k++)
+            for(k=0;k<((N+1)*(N+1));k++)
             {
                 f_preX[i][j][k]  = ConsVariable[i][j][k]*U[i][j][k];
                 f_preY[i][j][k]  = ConsVariable[i][j][k]*V[i][j][k];
@@ -322,10 +293,10 @@ void Field::operateFlux(double *Flux1,double *Flux2,double *Flux3,double *Flux4)
     {
         for(j=0;j<Nex;j++)
         {
-            cblas_dgemv(CblasRowMajor,CblasNoTrans,(N+1)*(N+1),(N+1)*(N+1),-0.5*dy,Flux2,(N+1)*(N+1),XFlux[i][j],1,0,RHS[i][j],1);
-            cblas_dgemv(CblasRowMajor,CblasNoTrans,(N+1)*(N+1),(N+1)*(N+1), 0.5*dy,Flux4,(N+1)*(N+1),XFlux[i][j],1,0,RHS[i][j],1);
-            cblas_dgemv(CblasRowMajor,CblasNoTrans,(N+1)*(N+1),(N+1)*(N+1),-0.5*dx,Flux3,(N+1)*(N+1),YFlux[i][j],1,0,RHS[i][j],1);
-            cblas_dgemv(CblasRowMajor,CblasNoTrans,(N+1)*(N+1),(N+1)*(N+1), 0.5*dx,Flux1,(N+1)*(N+1),YFlux[i][j],1,0,RHS[i][j],1);
+            cblas_dgemv(CblasRowMajor,CblasNoTrans,(N+1)*(N+1),(N+1)*(N+1),-0.5*dy,Flux2,(N+1)*(N+1),XFlux[i][j],1,1,RHS[i][j],1);
+            cblas_dgemv(CblasRowMajor,CblasNoTrans,(N+1)*(N+1),(N+1)*(N+1), 0.5*dy,Flux4,(N+1)*(N+1),XFlux[i][j],1,1,RHS[i][j],1);
+            cblas_dgemv(CblasRowMajor,CblasNoTrans,(N+1)*(N+1),(N+1)*(N+1),-0.5*dx,Flux3,(N+1)*(N+1),YFlux[i][j],1,1,RHS[i][j],1);
+            cblas_dgemv(CblasRowMajor,CblasNoTrans,(N+1)*(N+1),(N+1)*(N+1), 0.5*dx,Flux1,(N+1)*(N+1),YFlux[i][j],1,1,RHS[i][j],1);
         }
     }
 
@@ -352,6 +323,153 @@ void Field::copyField(double ***q)
     return ;
 }
 
+void Field::plotSolution(string s)
+{
+    double CG[Ney*N+1][Nex*N+1],CGX[Ney*N+1][Nex*N+1],CGY[Ney*N+1][Nex*N+1];
+    zeros(*CG,Ney*N+1,Nex*N+1);
+    unsigned i,j,k1,k2;
+    for(i=0;i<Ney;i++)
+    {
+        for(j=0;j<Nex;j++)
+        {
+            for(k1=1;k1<N;k1++)
+            {
+                k2=0;
+                CG[i*N+k1][j*N+k2]+=0.5*ConsVariable[i][j][k1*(N+1)+k2];
+
+                for(k2=1;k2<N;k2++)
+                    CG[i*N+k1][j*N+k2]=ConsVariable[i][j][k1*(N+1)+k2];
+
+                k2=N;
+                CG[i*N+k1][j*N+k2]+=0.5*ConsVariable[i][j][k1*(N+1)+k2];
+            }
+
+            k1=0;
+            k2=0;
+            CG[i*N+k1][j*N+k2]+=0.25*ConsVariable[i][j][k1*(N+1)+k2];
+            for(k2=1;k2<N;k2++)
+                CG[i*N+k1][j*N+k2]+=0.5*ConsVariable[i][j][k1*(N+1)+k2];
+            k2=N;
+            CG[i*N+k1][j*N+k2]+=0.25*ConsVariable[i][j][k1*(N+1)+k2];
+
+            k1=N;
+            k2=0;
+            CG[i*N+k1][j*N+k2]+=0.25*ConsVariable[i][j][k1*(N+1)+k2];
+            for(k2=1;k2<N;k2++)
+                CG[i*N+k1][j*N+k2]+=0.5*ConsVariable[i][j][k1*(N+1)+k2];
+            k2=N;
+            CG[i*N+k1][j*N+k2]+=0.25*ConsVariable[i][j][k1*(N+1)+k2];
+        }
+    }
+
+    for(i=0;i<(Ney*N+1);i++)
+    {
+        CG[i][0]    =2*CG[i][0];
+        CG[i][Nex*N]=2*CG[i][Nex*N];
+    }
+
+    for(j=0;j<(Nex*N+1);j++)
+    {
+        CG[0][j]    =2*CG[0][j];
+        CG[Ney*N][j]=2*CG[Ney*N][j];
+    }
+
+    /*Starting the CG form for X*/
+    for(i=0;i<Ney;i++)
+    {
+        for(j=0;j<Nex;j++)
+        {
+            for(k1=1;k1<N;k1++)
+            {
+                k2=0;
+                CGX[i*N+k1][j*N+k2]+=0.5*X[i][j][k1*(N+1)+k2];
+
+                for(k2=1;k2<N;k2++)
+                    CGX[i*N+k1][j*N+k2]=X[i][j][k1*(N+1)+k2];
+
+                k2=N;
+                CGX[i*N+k1][j*N+k2]+=0.5*X[i][j][k1*(N+1)+k2];
+            }
+
+            k1=0;
+            k2=0;
+            CGX[i*N+k1][j*N+k2]+=0.25*X[i][j][k1*(N+1)+k2];
+            for(k2=1;k2<N;k2++)
+                CGX[i*N+k1][j*N+k2]+=0.5*X[i][j][k1*(N+1)+k2];
+            k2=N;
+            CGX[i*N+k1][j*N+k2]+=0.25*X[i][j][k1*(N+1)+k2];
+
+            k1=N;
+            k2=0;
+            CGX[i*N+k1][j*N+k2]+=0.25*X[i][j][k1*(N+1)+k2];
+            for(k2=1;k2<N;k2++)
+                CGX[i*N+k1][j*N+k2]+=0.5*X[i][j][k1*(N+1)+k2];
+            k2=N;
+            CGX[i*N+k1][j*N+k2]+=0.25*X[i][j][k1*(N+1)+k2];
+        }
+    }
+
+    for(i=0;i<(Ney*N+1);i++)
+    {
+        CGX[i][0]    =2*CGX[i][0];
+        CGX[i][Nex*N]=2*CGX[i][Nex*N];
+    }
+
+    for(j=0;j<(Nex*N+1);j++)
+    {
+        CGX[0][j]    =2*CGX[0][j];
+        CGX[Ney*N][j]=2*CGX[Ney*N][j];
+    }
+    /*Starting the CG form for Y*/
+    for(i=0;i<Ney;i++)
+    {
+        for(j=0;j<Nex;j++)
+        {
+            for(k1=1;k1<N;k1++)
+            {
+                k2=0;
+                CGY[i*N+k1][j*N+k2]+=0.5*Y[i][j][k1*(N+1)+k2];
+
+                for(k2=1;k2<N;k2++)
+                    CGY[i*N+k1][j*N+k2]=Y[i][j][k1*(N+1)+k2];
+
+                k2=N;
+                CGY[i*N+k1][j*N+k2]+=0.5*Y[i][j][k1*(N+1)+k2];
+            }
+
+            k1=0;
+            k2=0;
+            CGY[i*N+k1][j*N+k2]+=0.25*Y[i][j][k1*(N+1)+k2];
+            for(k2=1;k2<N;k2++)
+                CGY[i*N+k1][j*N+k2]+=0.5*Y[i][j][k1*(N+1)+k2];
+            k2=N;
+            CGY[i*N+k1][j*N+k2]+=0.25*Y[i][j][k1*(N+1)+k2];
+
+            k1=N;
+            k2=0;
+            CGY[i*N+k1][j*N+k2]+=0.25*Y[i][j][k1*(N+1)+k2];
+            for(k2=1;k2<N;k2++)
+                CGY[i*N+k1][j*N+k2]+=0.5*Y[i][j][k1*(N+1)+k2];
+            k2=N;
+            CGY[i*N+k1][j*N+k2]+=0.25*Y[i][j][k1*(N+1)+k2];
+        }
+    }
+
+    for(i=0;i<(Ney*N+1);i++)
+    {
+        CGY[i][0]    =2*CGY[i][0];
+        CGY[i][Nex*N]=2*CGY[i][Nex*N];
+    }
+
+    for(j=0;j<(Nex*N+1);j++)
+    {
+        CGY[0][j]    =2*CGY[0][j];
+        CGY[Ney*N][j]=2*CGY[Ney*N][j];
+    }
+
+    return ;
+}
+
 void Field::solve()
 {
     unsigned i,j,t;
@@ -372,27 +490,11 @@ void Field::solve()
     twoDFluxMatrix4(*Flux4,N);
 
     double ***f_preX,***f_preY,***q0,***q1,***q2;
-    f_preX          =   new double** [Ney];
-    f_preY          =   new double** [Ney];
-    q0              =   new double** [Ney];
-    q1              =   new double** [Ney];
-    q2              =   new double** [Ney];
-    for( i = 0; i< Ney; i++)
-    {
-        f_preX[i]           =   new double* [Nex];
-        f_preY[i]           =   new double* [Nex];
-        q0[i]               =   new double* [Nex];
-        q1[i]               =   new double* [Nex];
-        q2[i]               =   new double* [Nex];
-        for(j=0;j<Nex;j++)
-        {
-            f_preX[i][j]        =   new double[(N+1)*(N+1)];
-            f_preY[i][j]        =   new double[(N+1)*(N+1)];
-            q0[i][j]            =   new double[(N+1)*(N+1)];
-            q1[i][j]            =   new double[(N+1)*(N+1)];
-            q2[i][j]            =   new double[(N+1)*(N+1)];
-        }
-    }
+    f_preX  =   create3D(Ney,Nex,((N+1)*(N+1)));
+    f_preY  =   create3D(Ney,Nex,((N+1)*(N+1)));
+    q0      =   create3D(Ney,Nex,((N+1)*(N+1)));
+    q1      =   create3D(Ney,Nex,((N+1)*(N+1)));
+    q2      =   create3D(Ney,Nex,((N+1)*(N+1)));
 
     computeLambda();
 
@@ -400,8 +502,8 @@ void Field::solve()
     {
         copyField(q0);
         computeFlux(f_preX,f_preY);
-        operateDerivative(f_preX,f_preY,*DerivativeMatrixX,*DerivativeMatrixY);
         computeNumericalFlux(f_preX, f_preY);
+        operateDerivative(f_preX,f_preY,*DerivativeMatrixX,*DerivativeMatrixY);
         operateFlux(*Flux1,*Flux2,*Flux3,*Flux4);
         operateInvereseMass(*MassInverse);
         //q (1) = q (0) + ∆tR(q (0));
