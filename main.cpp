@@ -5,23 +5,23 @@
 
 double U(double x, double y)
 {
-    return U0;
+    return y;
 }
 
 double V(double x, double y)
 {
-    return 0.0;
+    return (-x);
 }
 
 double initialConditions(double x, double y)
 {
-    return (exp(-8*(x*x+y*y)));
+    return (exp(-32*((x+0.5)*(x+0.5)+y*y)));
 }
 
 int main()
 {
-    unsigned    Nex =   10;
-    unsigned    Ney =   10;
+    unsigned    Nex =   20;
+    unsigned    Ney =   20;
     unsigned    N   =   4;
     double L_start  =   -1;
     double L_end    =   1;
@@ -31,9 +31,9 @@ int main()
     q.setDomain(L_start,L_end,H_start,H_end);
     q.setVelocity(U,V);
     q.setInitialConditions(initialConditions);
-    q.setSolver(5e-3,200);
+    q.setSolver(1e-3,1570);
     q.solve();
-    q.plotSolution("Initial");
+    q.plotSolution("t=1.570s");
 
     return 0;
 }

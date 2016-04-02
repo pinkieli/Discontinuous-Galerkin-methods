@@ -10,16 +10,17 @@ using namespace std;
 void plot(double *X, double *Y, double *Z, unsigned Nx, unsigned Ny, string Name)
 {
     int i;
-    freopen("X.dat","w",stdout);
+    FILE* pfile;
+    pfile=freopen("X.dat","w",stdout);
     display(X,Nx,Ny);
     fclose(stdout);
-    freopen("Y.dat","w",stdout);
+    pfile=freopen("Y.dat","w",stdout);
     display(Y,Nx,Ny);
     fclose(stdout);
-    freopen("Z.dat","w",stdout);
+    pfile=freopen("Z.dat","w",stdout);
     display(Z,Nx,Ny);
     fclose(stdout);
-    freopen("temp.m","w",stdout);
+    pfile=freopen("temp.m","w",stdout);
     printf("load X.dat;\n");
     printf("load Y.dat;\n");
     printf("load Z.dat;\n");
@@ -27,10 +28,10 @@ void plot(double *X, double *Y, double *Z, unsigned Nx, unsigned Ny, string Name
     printf("print -djpg %s.jpg;\n",Name.c_str());
     fclose(stdout);
 
-    freopen ("/dev/tty", "a", stdout);
+    pfile=freopen ("/dev/tty", "a", stdout);
     i=system("octave temp.m");
     i=system("rm -rf temp* load");
-    
+
     return ;
 }
 

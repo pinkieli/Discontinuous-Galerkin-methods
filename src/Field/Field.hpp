@@ -538,21 +538,6 @@ void Field::solve()
                 cblas_daxpy((N+1)*(N+1),0.5,q0[i][j],1,ConsVariable[i][j],1);
             }
 
-    /*
-        computeFlux(f_preX,f_preY);
-        operateDerivative(f_preX,f_preY,*DerivativeMatrixX,*DerivativeMatrixY);
-        computeNumericalFlux(f_preX, f_preY);
-        operateFlux(*Flux1,*Flux2,*Flux3,*Flux4);
-        operateInvereseMass(*MassInverse);
-        //q (3) = (1/3)*q(0) + (2/3)*q(2) + (2/3)*∆tR(q (2));
-        for(i=0;i<Ney;i++)
-            for(j=0;j<Nex;j++)
-            {
-                cblas_daxpy((N+1)*(N+1),dt,Rate[i][j],1,ConsVariable[i][j],1);
-                cblas_dscal((N+1)*(N+1),(2.0/3),ConsVariable[i][j],1);
-                cblas_daxpy((N+1)*(N+1),(1/3),q0[i][j],1,ConsVariable[i][j],1);
-            }
-    */
     }
 
     return ;
