@@ -529,13 +529,13 @@ void Field::solve()
         computeNumericalFlux(f_preX, f_preY);
         operateFlux(*Flux1,*Flux2,*Flux3,*Flux4);
         operateInvereseMass(*MassInverse);
-        //q (2) = 0.75*q(0) + 0.25*q(1) + 0.25*∆tR(q (1));
+        //q (2) = 0.5*q(0) + 0.5*q(1) + 0.5*∆tR(q (1));
         for(i=0;i<Ney;i++)
             for(j=0;j<Nex;j++)
             {
                 cblas_daxpy((N+1)*(N+1),dt,Rate[i][j],1,ConsVariable[i][j],1);
-                cblas_dscal((N+1)*(N+1),0.25,ConsVariable[i][j],1);
-                cblas_daxpy((N+1)*(N+1),0.75,q0[i][j],1,ConsVariable[i][j],1);
+                cblas_dscal((N+1)*(N+1),0.5,ConsVariable[i][j],1);
+                cblas_daxpy((N+1)*(N+1),0.5,q0[i][j],1,ConsVariable[i][j],1);
             }
 
     /*

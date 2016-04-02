@@ -31,9 +31,9 @@ int main()
     q.setDomain(L_start,L_end,H_start,H_end);
     q.setVelocity(U,V);
     q.setInitialConditions(initialConditions);
-    q.setSolver(5e-3,400);
+    q.setSolver(5e-3,200);
     q.solve();
-    q.plotSolution("time=400");
+    q.plotSolution("Initial");
 
     return 0;
 }
