@@ -89,6 +89,8 @@ Field::Field(unsigned Nx, unsigned Ny, unsigned n)
     YFlux           =   create3D(Ney,Nex,(N+1)*(N+1));
     X               =   create3D(Ney,Nex,(N+1)*(N+1));
     Y               =   create3D(Ney,Nex,(N+1)*(N+1));
+    U               =   create3D(Ney,Nex,(N+1)*(N+1));
+    V               =   create3D(Ney,Nex,(N+1)*(N+1));
 }
 
 void Field::setDomain(double L1, double L2, double L3, double L4)
@@ -171,6 +173,7 @@ void Field::setSolver(double a, unsigned b)
 
 void Field::computeLambda()
 {
+
     Lambda = 0;
     unsigned i,j,k;
     for(i=0;i<Ney;i++)
@@ -187,7 +190,7 @@ void Field::computeLambda()
 
     j   =   Nex-1;
 
-    for(i=0;j<Ney;i++)
+    for(i=0;i<Ney;i++)
         for(k=0;k<=N;k++)
             Lambda  =   MAX(Lambda,ABS(U[i][j][k*(N+1)+N]));
 
@@ -196,6 +199,8 @@ void Field::computeLambda()
     for(j=0;j<Nex;j++)
         for(k=0;k<=N;k++)
             Lambda  =   MAX(Lambda,ABS(V[i][j][k + N*(N+1) ]));
+
+
 
     return ;
 }
@@ -328,6 +333,8 @@ void Field::plotSolution(string s)
 {
     double CG[Ney*N+1][Nex*N+1],CGX[Ney*N+1][Nex*N+1],CGY[Ney*N+1][Nex*N+1];
     zeros(*CG,Ney*N+1,Nex*N+1);
+    zeros(*CGX,Ney*N+1,Nex*N+1);
+    zeros(*CGY,Ney*N+1,Nex*N+1);
     unsigned i,j,k1,k2;
     for(i=0;i<Ney;i++)
     {
@@ -503,6 +510,7 @@ void Field::solve()
 
     for(t=0;t<NTimeSteps;t++)
     {
+        printf("Time t=%6.3f\tCourant Number=%6.2f\n",(t+1.0)*dt,Lambda*dt*(1.0/dy+1.0/dx) );
         copyField(q0);
         computeFlux(f_preX,f_preY);
         computeNumericalFlux(f_preX, f_preY);
@@ -530,7 +538,7 @@ void Field::solve()
                 cblas_daxpy((N+1)*(N+1),0.75,q0[i][j],1,ConsVariable[i][j],1);
             }
 
-
+    /*
         computeFlux(f_preX,f_preY);
         operateDerivative(f_preX,f_preY,*DerivativeMatrixX,*DerivativeMatrixY);
         computeNumericalFlux(f_preX, f_preY);
@@ -541,10 +549,10 @@ void Field::solve()
             for(j=0;j<Nex;j++)
             {
                 cblas_daxpy((N+1)*(N+1),dt,Rate[i][j],1,ConsVariable[i][j],1);
-                cblas_dscal((N+1)*(N+1),(2/3),ConsVariable[i][j],1);
+                cblas_dscal((N+1)*(N+1),(2.0/3),ConsVariable[i][j],1);
                 cblas_daxpy((N+1)*(N+1),(1/3),q0[i][j],1,ConsVariable[i][j],1);
             }
-
+    */
     }
 
     return ;
