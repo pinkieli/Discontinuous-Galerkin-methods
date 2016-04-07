@@ -229,8 +229,6 @@ void ShallowWater::setDepth(function<double(double, double)> A)
         }
     }
 
-
-
     return ;
 }
 
@@ -292,6 +290,22 @@ void ShallowWater::computeLambda()
     return ;
 }
 
+void ShallowWater::computeRHS()
+{
+    unsigned i,j,k;
+    for(i=0;i<Ney;i++)
+        for(j=0;j<Nex;j++)
+            for(k=0;k<((N+1)*(N+1));k++)
+            {
+                eta_RHS[i][j][k]    =   0.0;
+                hu_RHS[i][j][k]     =   -G*eta[i][j][k]*H_x[i][j][k];
+                hv_RHS[i][j][k]     =   -G*eta[i][j][k]*H_y[i][j][k];
+            }
+
+    return ;
+}
+
+
 void ShallowWater::computeFlux()
 {
     unsigned i,j,k;
@@ -315,17 +329,67 @@ void ShallowWater::computeFlux()
     return ;
 }
 
-void ShallowWater::computeRHS()
+void ShallowWater::computeNumericalFlux( )
 {
     unsigned i,j,k;
+
     for(i=0;i<Ney;i++)
-        for(j=0;j<Nex;j++)
-            for(k=0;k<((N+1)*(N+1));k++)
+    {
+        for(j=1;j<Nex;j++)
+        {
+            for(k=0;k<=N;k++)
             {
-                eta_RHS[i][j][k]    =   0.0;
-                hu_RHS[i][j][k]     =   -G*eta[i][j][k]*H_x[i][j][k];
-                hv_RHS[i][j][k]     =   -G*eta[i][j][k]*H_y[i][j][k];
+                eta_XFlux_num[i][j-1][k*(N+1)+N]    =   eta_XFlux_num[i][j][k*(N+1)]    =   0.5*(eta_XFlux[i][j][k*(N+1)] + eta_XFlux[i][j-1][k*(N+1) + N] - Lambda*(eta[i][j][k*(N+1)]-eta[i][j-1][k*(N+1)+N]) );
+
+                hu_XFlux_num[i][j-1][k*(N+1)+N]     =   hu_XFlux_num[i][j][k*(N+1)]    =   0.5*(hu_XFlux[i][j][k*(N+1)] + hu_XFlux[i][j-1][k*(N+1) + N] - Lambda*(hu[i][j][k*(N+1)]-hu[i][j-1][k*(N+1)+N]) );
+
+                hv_XFlux_num[i][j-1][k*(N+1)+N]     =   hv_XFlux_num[i][j][k*(N+1)]    =   0.5*(hv_XFlux[i][j][k*(N+1)] + hv_XFlux[i][j-1][k*(N+1) + N] - Lambda*(hv[i][j][k*(N+1)]-hv[i][j-1][k*(N+1)+N]) );
             }
+        }
+    }
+
+    j=0;
+    for(i=0;i<Ney;i++)
+    {
+        for(k=0;k<=N;k++)
+        {
+            eta_XFlux_num[i][Nex-1][k*(N+1)+N]  =   eta_XFlux_num[i][j][k*(N+1)]    =   0.5*(eta_XFlux[i][j][k*(N+1)] + eta_XFlux[i][Nex-1][k*(N+1) + N] - Lambda*(eta[i][j][k*(N+1)]-eta[i][Nex-1][k*(N+1)+N]) );
+
+            hu_XFlux_num[i][Nex-1][k*(N+1)+N]  =    hu_XFlux_num[i][j][k*(N+1)]     =   0.5*(hu_XFlux[i][j][k*(N+1)] + hu_XFlux[i][Nex-1][k*(N+1) + N] - Lambda*(hu[i][j][k*(N+1)]-hu[i][Nex-1][k*(N+1)+N]) );
+
+            hv_XFlux_num[i][Nex-1][k*(N+1)+N]  =    hv_XFlux_num[i][j][k*(N+1)]     =   0.5*(hv_XFlux[i][j][k*(N+1)] + hv_XFlux[i][Nex-1][k*(N+1) + N] - Lambda*(hv[i][j][k*(N+1)]-hv[i][Nex-1][k*(N+1)+N]) );
+        }
+    }
+
+    for(i=1;i<Ney;i++)
+    {
+        for(j=0;j<Nex;j++)
+        {
+            for(k=0;k<=N;k++)
+            {
+                eta_YFlux_num[i-1][j][k + N*(N+1)]  =   eta_YFlux_num[i][j][k]  =   0.5*(eta_YFlux[i][j][k] + eta_YFlux[i-1][j][k + N*(N+1)] - Lambda*(eta[i][j][k] - eta[i-1][j][k + N*(N+1)]) );
+
+                hu_YFlux_num[i-1][j][k + N*(N+1)]  =    hu_YFlux_num[i][j][k]   =   0.5*(hu_YFlux[i][j][k] + hu_YFlux[i-1][j][k + N*(N+1)] - Lambda*(hu[i][j][k] - hu[i-1][j][k + N*(N+1)]) );
+
+                hv_YFlux_num[i-1][j][k + N*(N+1)]  =    hv_YFlux_num[i][j][k]   =   0.5*(hv_YFlux[i][j][k] + hv_YFlux[i-1][j][k + N*(N+1)] - Lambda*(hv[i][j][k] - hv[i-1][j][k + N*(N+1)]) );
+            }
+        }
+    }
+
+    i=0;
+
+    for(j=0;j<Nex;j++)
+    {
+        for(k=0;k<=N;k++)
+        {
+            eta_YFlux_num[Ney-1][j][k + N*(N+1)]    =   eta_YFlux_num[i][j][k]  =   0.5*(eta_YFlux[i][j][k] + eta_YFlux[Ney-1][j][k + N*(N+1)] - Lambda*(eta[i][j][k] - eta[Ney-1][j][k + N*(N+1)]) );
+
+            hu_YFlux_num[Ney-1][j][k + N*(N+1)]    =    hu_YFlux_num[i][j][k]   =   0.5*(hu_YFlux[i][j][k] + hu_YFlux[Ney-1][j][k + N*(N+1)] - Lambda*(hu[i][j][k] - hu[Ney-1][j][k + N*(N+1)]) );
+
+            hv_YFlux_num[Ney-1][j][k + N*(N+1)]    =    hv_YFlux_num[i][j][k]   =   0.5*(hv_YFlux[i][j][k] + hv_YFlux[Ney-1][j][k + N*(N+1)] - Lambda*(hv[i][j][k] - hv[Ney-1][j][k + N*(N+1)]) );
+
+        }
+    }
 
     return ;
 }
@@ -348,83 +412,6 @@ void ShallowWater::operateDerivative( )
             cblas_dgemv(CblasRowMajor,CblasTrans,(N+1)*(N+1),(N+1)*(N+1),0.5*dx,DerivativeMatrixY,(N+1)*(N+1),hv_YFlux[i][j],1,1,hv_RHS[i][j],1);
         }
     }
-    return ;
-}
-
-void ShallowWater::computeNumericalFlux( )
-{
-    unsigned i,j,k;
-
-    for(i=0;i<Ney;i++)
-    {
-        for(j=1;j<Nex;j++)
-        {
-            for(k=0;k<=N;k++)
-            {
-                eta_XFlux_num[i][j][k*(N+1)]    =   0.5*(eta_XFlux[i][j][k*(N+1)] + eta_XFlux[i][j-1][k*(N+1) + N] - Lambda*(eta[i][j][k*(N+1)]-eta[i][j-1][k*(N+1)+N]) );
-                eta_XFlux_num[i][j-1][k*(N+1)+N]=   0.5*(eta_XFlux[i][j][k*(N+1)] + eta_XFlux[i][j-1][k*(N+1) + N] - Lambda*(eta[i][j][k*(N+1)]-eta[i][j-1][k*(N+1)+N]) );
-
-                hu_XFlux_num[i][j][k*(N+1)]    =   0.5*(hu_XFlux[i][j][k*(N+1)] + hu_XFlux[i][j-1][k*(N+1) + N] - Lambda*(hu[i][j][k*(N+1)]-hu[i][j-1][k*(N+1)+N]) );
-                hu_XFlux_num[i][j-1][k*(N+1)+N]=   0.5*(hu_XFlux[i][j][k*(N+1)] + hu_XFlux[i][j-1][k*(N+1) + N] - Lambda*(hu[i][j][k*(N+1)]-hu[i][j-1][k*(N+1)+N]) );
-
-                hv_XFlux_num[i][j][k*(N+1)]    =   0.5*(hv_XFlux[i][j][k*(N+1)] + hv_XFlux[i][j-1][k*(N+1) + N] - Lambda*(hv[i][j][k*(N+1)]-hv[i][j-1][k*(N+1)+N]) );
-                hv_XFlux_num[i][j-1][k*(N+1)+N]=   0.5*(hv_XFlux[i][j][k*(N+1)] + hv_XFlux[i][j-1][k*(N+1) + N] - Lambda*(hv[i][j][k*(N+1)]-hv[i][j-1][k*(N+1)+N]) );
-            }
-        }
-    }
-
-    j=0;
-    for(i=0;i<Ney;i++)
-    {
-        for(k=0;k<=N;k++)
-        {
-            eta_XFlux_num[i][j][k*(N+1)]        =   0.5*(eta_XFlux[i][j][k*(N+1)] + eta_XFlux[i][Nex-1][k*(N+1) + N] - Lambda*(eta[i][j][k*(N+1)]-eta[i][Nex-1][k*(N+1)+N]) );
-            eta_XFlux_num[i][Nex-1][k*(N+1)+N]  =   0.5*(eta_XFlux[i][j][k*(N+1)] + eta_XFlux[i][Nex-1][k*(N+1) + N] - Lambda*(eta[i][j][k*(N+1)]-eta[i][Nex-1][k*(N+1)+N]) );
-
-            hu_XFlux_num[i][j][k*(N+1)]        =   0.5*(hu_XFlux[i][j][k*(N+1)] + hu_XFlux[i][Nex-1][k*(N+1) + N] - Lambda*(hu[i][j][k*(N+1)]-hu[i][Nex-1][k*(N+1)+N]) );
-            hu_XFlux_num[i][Nex-1][k*(N+1)+N]  =   0.5*(hu_XFlux[i][j][k*(N+1)] + hu_XFlux[i][Nex-1][k*(N+1) + N] - Lambda*(hu[i][j][k*(N+1)]-hu[i][Nex-1][k*(N+1)+N]) );
-
-            hv_XFlux_num[i][j][k*(N+1)]        =   0.5*(hv_XFlux[i][j][k*(N+1)] + hv_XFlux[i][Nex-1][k*(N+1) + N] - Lambda*(hv[i][j][k*(N+1)]-hv[i][Nex-1][k*(N+1)+N]) );
-            hv_XFlux_num[i][Nex-1][k*(N+1)+N]  =   0.5*(hv_XFlux[i][j][k*(N+1)] + hv_XFlux[i][Nex-1][k*(N+1) + N] - Lambda*(hv[i][j][k*(N+1)]-hv[i][Nex-1][k*(N+1)+N]) );
-        }
-    }
-
-    for(i=1;i<Ney;i++)
-    {
-        for(j=0;j<Nex;j++)
-        {
-            for(k=0;k<=N;k++)
-            {
-                eta_YFlux_num[i][j][k]              =   0.5*(eta_YFlux[i][j][k] + eta_YFlux[i-1][j][k + N*(N+1)] - Lambda*(eta[i][j][k] - eta[i-1][j][k + N*(N+1)]) );
-                eta_YFlux_num[i-1][j][k + N*(N+1)]  =   0.5*(eta_YFlux[i][j][k] + eta_YFlux[i-1][j][k + N*(N+1)] - Lambda*(eta[i][j][k] - eta[i-1][j][k + N*(N+1)]) );
-
-                hu_YFlux_num[i][j][k]              =   0.5*(hu_YFlux[i][j][k] + hu_YFlux[i-1][j][k + N*(N+1)] - Lambda*(hu[i][j][k] - hu[i-1][j][k + N*(N+1)]) );
-                hu_YFlux_num[i-1][j][k + N*(N+1)]  =   0.5*(hu_YFlux[i][j][k] + hu_YFlux[i-1][j][k + N*(N+1)] - Lambda*(hu[i][j][k] - hu[i-1][j][k + N*(N+1)]) );
-
-                hv_YFlux_num[i][j][k]              =   0.5*(hv_YFlux[i][j][k] + hv_YFlux[i-1][j][k + N*(N+1)] - Lambda*(hv[i][j][k] - hv[i-1][j][k + N*(N+1)]) );
-                hv_YFlux_num[i-1][j][k + N*(N+1)]  =   0.5*(hv_YFlux[i][j][k] + hv_YFlux[i-1][j][k + N*(N+1)] - Lambda*(hv[i][j][k] - hv[i-1][j][k + N*(N+1)]) );
-            }
-        }
-    }
-
-    i=0;
-
-    for(j=0;j<Nex;j++)
-    {
-        for(k=0;k<=N;k++)
-        {
-            eta_YFlux_num[i][j][k]                  =   0.5*(eta_YFlux[i][j][k] + eta_YFlux[Ney-1][j][k + N*(N+1)] - Lambda*(eta[i][j][k] - eta[Ney-1][j][k + N*(N+1)]) );
-            eta_YFlux_num[Ney-1][j][k + N*(N+1)]    =   0.5*(eta_YFlux[i][j][k] + eta_YFlux[Ney-1][j][k + N*(N+1)] - Lambda*(eta[i][j][k] - eta[Ney-1][j][k + N*(N+1)]) );
-
-            hu_YFlux_num[i][j][k]                  =   0.5*(hu_YFlux[i][j][k] + hu_YFlux[Ney-1][j][k + N*(N+1)] - Lambda*(hu[i][j][k] - hu[Ney-1][j][k + N*(N+1)]) );
-            hu_YFlux_num[Ney-1][j][k + N*(N+1)]    =   0.5*(hu_YFlux[i][j][k] + hu_YFlux[Ney-1][j][k + N*(N+1)] - Lambda*(hu[i][j][k] - hu[Ney-1][j][k + N*(N+1)]) );
-
-            hv_YFlux_num[i][j][k]                  =   0.5*(hv_YFlux[i][j][k] + hv_YFlux[Ney-1][j][k + N*(N+1)] - Lambda*(hv[i][j][k] - hv[Ney-1][j][k + N*(N+1)]) );
-            hv_YFlux_num[Ney-1][j][k + N*(N+1)]    =   0.5*(hv_YFlux[i][j][k] + hv_YFlux[Ney-1][j][k + N*(N+1)] - Lambda*(hv[i][j][k] - hv[Ney-1][j][k + N*(N+1)]) );
-
-        }
-    }
-
     return ;
 }
 
@@ -459,7 +446,7 @@ void ShallowWater::operateFlux()
 void ShallowWater::operateInvereseMass()
 {
     unsigned i,j;
-    double alpha    =   4/(dx*dy);
+    double alpha    =   4.0/(dx*dy);
     for(i=0;i<Ney;i++)
         for(j=0;j<Nex;j++)
         {
@@ -541,6 +528,7 @@ void ShallowWater::RK2()
             cblas_daxpy((N+1)*(N+1),0.5,hu_prev[i][j],1,hu[i][j],1);
             cblas_daxpy((N+1)*(N+1),0.5,hv_prev[i][j],1,hv[i][j],1);
         }
+    updateVelocities();
 
     return ;
 }
@@ -548,10 +536,6 @@ void ShallowWater::RK2()
 void ShallowWater::solve()
 {
     unsigned t;
-
-    double ***q0,***q1;
-    q0      =   create3D(Ney,Nex,((N+1)*(N+1)));
-    q1      =   create3D(Ney,Nex,((N+1)*(N+1)));
 
     for(t=0;t<NTimeSteps;t++)
     {
