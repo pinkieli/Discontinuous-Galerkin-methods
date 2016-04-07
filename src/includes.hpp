@@ -28,3 +28,5 @@ using namespace std;
 #include "Elemental/FluxMatrix.hpp"
 
 #include "Field/Field.hpp"
+
+#include "ShallowWater/ShallowWater.hpp"

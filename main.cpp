@@ -1,23 +1,27 @@
 #include "src/includes.hpp"
 #include <cmath>
 
-#define U0  1.0
+
 
 double U(double x, double y)
 {
-    return y;
+    return 0.0;
 }
 
 double V(double x, double y)
 {
-    return (-x);
+    return 0.0;
 }
 
-double initialConditions(double x, double y)
+double eta(double x, double y)
 {
-    return (exp(-32*((x+0.5)*(x+0.5)+y*y)));
+    return (exp(-8*((x)*(x)+y*y)));
 }
 
+double Depth(double x, double y)
+{
+    return 0.0;
+}
 int main()
 {
     unsigned    Nex =   20;
@@ -27,13 +31,13 @@ int main()
     double L_end    =   1;
     double H_start  =   -1;
     double H_end    =   1;
-    Field q(Nex,Ney,N);
+    ShallowWater q(Nex,Ney,N);
     q.setDomain(L_start,L_end,H_start,H_end);
-    q.setVelocity(U,V);
-    q.setInitialConditions(initialConditions);
-    q.setSolver(1e-3,1570);
+    q.setDepth(Depth);
+    q.setInitialConditions(eta,U,V);
+    q.setSolver(1e-4,400);
     q.solve();
-    q.plotSolution("t=1.570s");
+    q.plotSolution("t=0.001s");
 
     return 0;
 }

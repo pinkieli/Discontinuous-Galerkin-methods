@@ -100,10 +100,10 @@ public:
     void operateDerivative();
     void computeNumericalFlux();
     void operateFlux();
-    void operateInvereseMass();
+    void operateInverseMass();
     void copyField();
     void plotSolution(string );
-    void RK2();
+    void RK3();
     void updateVelocities();
     void solve();
 };
@@ -146,9 +146,9 @@ ShallowWater::ShallowWater(unsigned Nx, unsigned Ny, unsigned n)
     hv_XFlux_num    =   create3D(Ney,Nex,(N+1)*(N+1));
     hv_YFlux_num    =   create3D(Ney,Nex,(N+1)*(N+1));
 
-    eta_prev        =   create3D(Ney,Nex,(N+1)*(N+1));
-    hu_prev         =   create3D(Ney,Nex,(N+1)*(N+1));
-    hv_prev         =   create3D(Ney,Nex,(N+1)*(N+1));
+    eta_prev           =   create3D(Ney,Nex,(N+1)*(N+1));
+    hu_prev            =   create3D(Ney,Nex,(N+1)*(N+1));
+    hv_prev            =   create3D(Ney,Nex,(N+1)*(N+1));
 
     MassMatrix          =   new double[((N+1)*(N+1))*((N+1)*(N+1))];
     MassInverse         =   new double[((N+1)*(N+1))*((N+1)*(N+1))];
@@ -224,8 +224,8 @@ void ShallowWater::setDepth(function<double(double, double)> A)
             for (k=0;k<((N+1)*(N+1));k++)
                 H[i][j][k]  =   A(X[i][j][k],Y[i][j][k]);
 
-            cblas_dgemv(CblasRowMajor,CblasTrans,(N+1)*(N+1),(N+1)*(N+1),0.5*dy,DerivativeMatrixX,(N+1)*(N+1),H[i][j],1,0,H_x[i][j],1);
-            cblas_dgemv(CblasRowMajor,CblasTrans,(N+1)*(N+1),(N+1)*(N+1),0.5*dx,DerivativeMatrixY,(N+1)*(N+1),H[i][j],1,0,H_y[i][j],1);
+            cblas_dgemv(CblasRowMajor,CblasNoTrans,(N+1)*(N+1),(N+1)*(N+1),0.5*dy,DerivativeMatrixX,(N+1)*(N+1),H[i][j],1,0,H_x[i][j],1);
+            cblas_dgemv(CblasRowMajor,CblasNoTrans,(N+1)*(N+1),(N+1)*(N+1),0.5*dx,DerivativeMatrixY,(N+1)*(N+1),H[i][j],1,0,H_y[i][j],1);
         }
     }
 
@@ -269,8 +269,8 @@ void ShallowWater::computeLambda()
         {
             for(k=0;k<=N;k++)
             {
-                Lambda  =   MAX(Lambda,ABS(v[i][j][k])+sqrt(G*eta[i][j][k]));
-                Lambda  =   MAX(Lambda,ABS(u[i][j][k*(N+1)])+sqrt(G*eta[i][j][k]));
+                Lambda  =   MAX(Lambda,ABS(v[i][j][k]));
+                Lambda  =   MAX(Lambda,ABS(u[i][j][k*(N+1)]));
             }
         }
     }
@@ -279,13 +279,13 @@ void ShallowWater::computeLambda()
 
     for(i=0;i<Ney;i++)
         for(k=0;k<=N;k++)
-            Lambda  =   MAX(Lambda,ABS(u[i][j][k*(N+1)+N])+sqrt(G*eta[i][j][k]));
+            Lambda  =   MAX(Lambda,ABS(u[i][j][k*(N+1)+N]));
 
     i   =   Ney-1;
 
     for(j=0;j<Nex;j++)
         for(k=0;k<=N;k++)
-            Lambda  =   MAX(Lambda,ABS(v[i][j][k + N*(N+1) ])+sqrt(G*eta[i][j][k]));
+            Lambda  =   MAX(Lambda,ABS(v[i][j][k + N*(N+1) ]));
 
     return ;
 }
@@ -300,7 +300,10 @@ void ShallowWater::computeRHS()
                 eta_RHS[i][j][k]    =   0.0;
                 hu_RHS[i][j][k]     =   -G*eta[i][j][k]*H_x[i][j][k];
                 hv_RHS[i][j][k]     =   -G*eta[i][j][k]*H_y[i][j][k];
+                //hu_RHS[i][j][k]     =   0.0;
+                //hv_RHS[i][j][k]     =   0.0;
             }
+
 
     return ;
 }
@@ -328,7 +331,6 @@ void ShallowWater::computeFlux()
     }
     return ;
 }
-
 void ShallowWater::computeNumericalFlux( )
 {
     unsigned i,j,k;
@@ -339,11 +341,11 @@ void ShallowWater::computeNumericalFlux( )
         {
             for(k=0;k<=N;k++)
             {
-                eta_XFlux_num[i][j-1][k*(N+1)+N]    =   eta_XFlux_num[i][j][k*(N+1)]    =   0.5*(eta_XFlux[i][j][k*(N+1)] + eta_XFlux[i][j-1][k*(N+1) + N] - Lambda*(eta[i][j][k*(N+1)]-eta[i][j-1][k*(N+1)+N]) );
+                eta_XFlux_num[i][j-1][k*(N+1)+N]    =   eta_XFlux_num[i][j][k*(N+1)]    =   0.5*(eta_XFlux[i][j][k*(N+1)] + eta_XFlux[i][j-1][k*(N+1) + N] - (MAX((ABS(u[i][j][k*(N+1)])+sqrt(G*(eta[i][j][k*(N+1)]))),(ABS(u[i][j-1][k*(N+1)+N])+sqrt(G*(eta[i][j-1][k*(N+1)+N])))))*(eta[i][j][k*(N+1)]-eta[i][j-1][k*(N+1)+N]) );
 
-                hu_XFlux_num[i][j-1][k*(N+1)+N]     =   hu_XFlux_num[i][j][k*(N+1)]    =   0.5*(hu_XFlux[i][j][k*(N+1)] + hu_XFlux[i][j-1][k*(N+1) + N] - Lambda*(hu[i][j][k*(N+1)]-hu[i][j-1][k*(N+1)+N]) );
+                hu_XFlux_num[i][j-1][k*(N+1)+N]     =   hu_XFlux_num[i][j][k*(N+1)]    =   0.5*(hu_XFlux[i][j][k*(N+1)] + hu_XFlux[i][j-1][k*(N+1) + N] - MAX((ABS(u[i][j][k*(N+1)])+sqrt(G*(eta[i][j][k*(N+1)]))),(ABS(u[i][j-1][k*(N+1)+N])+sqrt(G*(eta[i][j-1][k*(N+1)+N]))))*(hu[i][j][k*(N+1)]-hu[i][j-1][k*(N+1)+N]) );
 
-                hv_XFlux_num[i][j-1][k*(N+1)+N]     =   hv_XFlux_num[i][j][k*(N+1)]    =   0.5*(hv_XFlux[i][j][k*(N+1)] + hv_XFlux[i][j-1][k*(N+1) + N] - Lambda*(hv[i][j][k*(N+1)]-hv[i][j-1][k*(N+1)+N]) );
+                hv_XFlux_num[i][j-1][k*(N+1)+N]     =   hv_XFlux_num[i][j][k*(N+1)]    =   0.5*(hv_XFlux[i][j][k*(N+1)] + hv_XFlux[i][j-1][k*(N+1) + N] - (MAX((ABS(u[i][j][k*(N+1)])+sqrt(G*(eta[i][j][k*(N+1)]))),(ABS(u[i][j-1][k*(N+1)+N])+sqrt(G*(eta[i][j-1][k*(N+1)+N])))))*(hv[i][j][k*(N+1)]-hv[i][j-1][k*(N+1)+N]) );
             }
         }
     }
@@ -353,11 +355,12 @@ void ShallowWater::computeNumericalFlux( )
     {
         for(k=0;k<=N;k++)
         {
-            eta_XFlux_num[i][Nex-1][k*(N+1)+N]  =   eta_XFlux_num[i][j][k*(N+1)]    =   0.5*(eta_XFlux[i][j][k*(N+1)] + eta_XFlux[i][Nex-1][k*(N+1) + N] - Lambda*(eta[i][j][k*(N+1)]-eta[i][Nex-1][k*(N+1)+N]) );
+            eta_XFlux_num[i][Nex-1][k*(N+1)+N]  =   eta_XFlux_num[i][j][k*(N+1)]    =   0.5*(eta_XFlux[i][j][k*(N+1)] + eta_XFlux[i][Nex-1][k*(N+1) + N] - (MAX((ABS(u[i][j][k*(N+1)])+sqrt(G*(eta[i][j][k*(N+1)]))),(ABS(u[i][Nex-1][k*(N+1) + N])+sqrt(G*(eta[i][Nex-1][k*(N+1) + N])))))*(eta[i][j][k*(N+1)]-eta[i][Nex-1][k*(N+1)+N]) );
 
-            hu_XFlux_num[i][Nex-1][k*(N+1)+N]  =    hu_XFlux_num[i][j][k*(N+1)]     =   0.5*(hu_XFlux[i][j][k*(N+1)] + hu_XFlux[i][Nex-1][k*(N+1) + N] - Lambda*(hu[i][j][k*(N+1)]-hu[i][Nex-1][k*(N+1)+N]) );
+            hu_XFlux_num[i][Nex-1][k*(N+1)+N]   =    hu_XFlux_num[i][j][k*(N+1)]    =   0.5*(hu_XFlux[i][j][k*(N+1)] + hu_XFlux[i][Nex-1][k*(N+1) + N] - (MAX((ABS(u[i][j][k*(N+1)])+sqrt(G*(eta[i][j][k*(N+1)]))),(ABS(u[i][Nex-1][k*(N+1) + N])+sqrt(G*(eta[i][Nex-1][k*(N+1) + N])))))*(hu[i][j][k*(N+1)]-hu[i][Nex-1][k*(N+1)+N]) );
 
-            hv_XFlux_num[i][Nex-1][k*(N+1)+N]  =    hv_XFlux_num[i][j][k*(N+1)]     =   0.5*(hv_XFlux[i][j][k*(N+1)] + hv_XFlux[i][Nex-1][k*(N+1) + N] - Lambda*(hv[i][j][k*(N+1)]-hv[i][Nex-1][k*(N+1)+N]) );
+            hv_XFlux_num[i][Nex-1][k*(N+1)+N]   =    hv_XFlux_num[i][j][k*(N+1)]    =   0.5*(hv_XFlux[i][j][k*(N+1)] + hv_XFlux[i][Nex-1][k*(N+1) + N] - (MAX((ABS(u[i][j][k*(N+1)])+sqrt(G*(eta[i][j][k*(N+1)]))),(ABS(u[i][Nex-1][k*(N+1) + N])+sqrt(G*(eta[i][Nex-1][k*(N+1) + N])))))*(hv[i][j][k*(N+1)]-hv[i][Nex-1][k*(N+1)+N]) );
+
         }
     }
 
@@ -367,11 +370,11 @@ void ShallowWater::computeNumericalFlux( )
         {
             for(k=0;k<=N;k++)
             {
-                eta_YFlux_num[i-1][j][k + N*(N+1)]  =   eta_YFlux_num[i][j][k]  =   0.5*(eta_YFlux[i][j][k] + eta_YFlux[i-1][j][k + N*(N+1)] - Lambda*(eta[i][j][k] - eta[i-1][j][k + N*(N+1)]) );
+                eta_YFlux_num[i-1][j][k + N*(N+1)]  =   eta_YFlux_num[i][j][k]  =   0.5*(eta_YFlux[i][j][k] + eta_YFlux[i-1][j][k + N*(N+1)] - (MAX((ABS(v[i][j][k])+sqrt(G*(eta[i][j][k]))),(ABS(v[i-1][j][k + N*(N+1)])+sqrt(G*(eta[i-1][j][k + N*(N+1)])))))*(eta[i][j][k] - eta[i-1][j][k + N*(N+1)]) );
 
-                hu_YFlux_num[i-1][j][k + N*(N+1)]  =    hu_YFlux_num[i][j][k]   =   0.5*(hu_YFlux[i][j][k] + hu_YFlux[i-1][j][k + N*(N+1)] - Lambda*(hu[i][j][k] - hu[i-1][j][k + N*(N+1)]) );
+                hu_YFlux_num[i-1][j][k + N*(N+1)]  =    hu_YFlux_num[i][j][k]   =   0.5*(hu_YFlux[i][j][k] + hu_YFlux[i-1][j][k + N*(N+1)] - (MAX((ABS(v[i][j][k])+sqrt(G*(eta[i][j][k]))),(ABS(v[i-1][j][k + N*(N+1)])+sqrt(G*(eta[i-1][j][k + N*(N+1)])))))*(hu[i][j][k] - hu[i-1][j][k + N*(N+1)]) );
 
-                hv_YFlux_num[i-1][j][k + N*(N+1)]  =    hv_YFlux_num[i][j][k]   =   0.5*(hv_YFlux[i][j][k] + hv_YFlux[i-1][j][k + N*(N+1)] - Lambda*(hv[i][j][k] - hv[i-1][j][k + N*(N+1)]) );
+                hv_YFlux_num[i-1][j][k + N*(N+1)]  =    hv_YFlux_num[i][j][k]   =   0.5*(hv_YFlux[i][j][k] + hv_YFlux[i-1][j][k + N*(N+1)] - (MAX((ABS(v[i][j][k])+sqrt(G*(eta[i][j][k]))),(ABS(v[i-1][j][k + N*(N+1)])+sqrt(G*(eta[i-1][j][k + N*(N+1)])))))*(hv[i][j][k] - hv[i-1][j][k + N*(N+1)]) );
             }
         }
     }
@@ -382,18 +385,17 @@ void ShallowWater::computeNumericalFlux( )
     {
         for(k=0;k<=N;k++)
         {
-            eta_YFlux_num[Ney-1][j][k + N*(N+1)]    =   eta_YFlux_num[i][j][k]  =   0.5*(eta_YFlux[i][j][k] + eta_YFlux[Ney-1][j][k + N*(N+1)] - Lambda*(eta[i][j][k] - eta[Ney-1][j][k + N*(N+1)]) );
+            eta_YFlux_num[Ney-1][j][k + N*(N+1)]    =   eta_YFlux_num[i][j][k]  =   0.5*(eta_YFlux[i][j][k] + eta_YFlux[Ney-1][j][k + N*(N+1)] - (MAX((ABS(v[i][j][k])+sqrt(G*(eta[i][j][k]))),(ABS(v[Ney-1][j][k + N*(N+1)])+sqrt(G*(eta[Ney-1][j][k + N*(N+1)])))))*(eta[i][j][k] - eta[Ney-1][j][k + N*(N+1)]) );
 
-            hu_YFlux_num[Ney-1][j][k + N*(N+1)]    =    hu_YFlux_num[i][j][k]   =   0.5*(hu_YFlux[i][j][k] + hu_YFlux[Ney-1][j][k + N*(N+1)] - Lambda*(hu[i][j][k] - hu[Ney-1][j][k + N*(N+1)]) );
+            hu_YFlux_num[Ney-1][j][k + N*(N+1)]    =    hu_YFlux_num[i][j][k]   =   0.5*(hu_YFlux[i][j][k] + hu_YFlux[Ney-1][j][k + N*(N+1)] - (MAX((ABS(v[i][j][k])+sqrt(G*(eta[i][j][k]))),(ABS(v[Ney-1][j][k + N*(N+1)])+sqrt(G*(eta[Ney-1][j][k + N*(N+1)])))))*(hu[i][j][k] - hu[Ney-1][j][k + N*(N+1)]) );
 
-            hv_YFlux_num[Ney-1][j][k + N*(N+1)]    =    hv_YFlux_num[i][j][k]   =   0.5*(hv_YFlux[i][j][k] + hv_YFlux[Ney-1][j][k + N*(N+1)] - Lambda*(hv[i][j][k] - hv[Ney-1][j][k + N*(N+1)]) );
+            hv_YFlux_num[Ney-1][j][k + N*(N+1)]    =    hv_YFlux_num[i][j][k]   =   0.5*(hv_YFlux[i][j][k] + hv_YFlux[Ney-1][j][k + N*(N+1)] - (MAX((ABS(v[i][j][k])+sqrt(G*(eta[i][j][k]))),(ABS(v[Ney-1][j][k + N*(N+1)])+sqrt(G*(eta[Ney-1][j][k + N*(N+1)])))))*(hv[i][j][k] - hv[Ney-1][j][k + N*(N+1)]) );
 
         }
     }
 
     return ;
 }
-
 void ShallowWater::operateDerivative( )
 {
     unsigned i,j;
@@ -443,7 +445,7 @@ void ShallowWater::operateFlux()
     return ;
 }
 
-void ShallowWater::operateInvereseMass()
+void ShallowWater::operateInverseMass()
 {
     unsigned i,j;
     double alpha    =   4.0/(dx*dy);
@@ -487,17 +489,18 @@ void ShallowWater::updateVelocities()
     return ;
 }
 
-void ShallowWater::RK2()
+void ShallowWater::RK3()
 {
     unsigned i,j;
     computeLambda();
     copyField();
+
     computeRHS();
     computeFlux();
     computeNumericalFlux();
     operateDerivative();
     operateFlux();
-    operateInvereseMass();
+    operateInverseMass();
     //q (1) = q (0) + ∆tR(q (0));
     for(i=0;i<Ney;i++)
         for(j=0;j<Nex;j++)
@@ -508,12 +511,12 @@ void ShallowWater::RK2()
         }
     updateVelocities();
 
-    computeLambda();
+    computeRHS();
     computeFlux();
-    operateDerivative();
     computeNumericalFlux();
+    operateDerivative();
     operateFlux();
-    operateInvereseMass();
+    operateInverseMass();
     //q (2) = 0.5*q(0) + 0.5*q(1) + 0.5*∆tR(q (1));
     for(i=0;i<Ney;i++)
         for(j=0;j<Nex;j++)
@@ -521,14 +524,37 @@ void ShallowWater::RK2()
             cblas_daxpy((N+1)*(N+1),dt,eta_Rate[i][j],1,eta[i][j],1);
             cblas_daxpy((N+1)*(N+1),dt,hu_Rate[i][j],1,hu[i][j],1);
             cblas_daxpy((N+1)*(N+1),dt,hv_Rate[i][j],1,hv[i][j],1);
-            cblas_dscal((N+1)*(N+1),0.5,eta[i][j],1);
-            cblas_dscal((N+1)*(N+1),0.5,hu[i][j],1);
-            cblas_dscal((N+1)*(N+1),0.5,hv[i][j],1);
-            cblas_daxpy((N+1)*(N+1),0.5,eta_prev[i][j],1,eta[i][j],1);
-            cblas_daxpy((N+1)*(N+1),0.5,hu_prev[i][j],1,hu[i][j],1);
-            cblas_daxpy((N+1)*(N+1),0.5,hv_prev[i][j],1,hv[i][j],1);
+            cblas_dscal((N+1)*(N+1),0.25,eta[i][j],1);
+            cblas_dscal((N+1)*(N+1),0.25,hu[i][j],1);
+            cblas_dscal((N+1)*(N+1),0.25,hv[i][j],1);
+            cblas_daxpy((N+1)*(N+1),0.75,eta_prev[i][j],1,eta[i][j],1);
+            cblas_daxpy((N+1)*(N+1),0.75,hu_prev[i][j],1,hu[i][j],1);
+            cblas_daxpy((N+1)*(N+1),0.75,hv_prev[i][j],1,hv[i][j],1);
         }
     updateVelocities();
+
+    computeRHS();
+    computeFlux();
+    computeNumericalFlux();
+    operateDerivative();
+    operateFlux();
+    operateInverseMass();
+    //q (2) = 0.5*q(0) + 0.5*q(1) + 0.5*∆tR(q (1));
+    for(i=0;i<Ney;i++)
+        for(j=0;j<Nex;j++)
+        {
+            cblas_daxpy((N+1)*(N+1),dt,eta_Rate[i][j],1,eta[i][j],1);
+            cblas_daxpy((N+1)*(N+1),dt,hu_Rate[i][j],1,hu[i][j],1);
+            cblas_daxpy((N+1)*(N+1),dt,hv_Rate[i][j],1,hv[i][j],1);
+            cblas_dscal((N+1)*(N+1),(2.0/3.0),eta[i][j],1);
+            cblas_dscal((N+1)*(N+1),(2.0/3.0),hu[i][j],1);
+            cblas_dscal((N+1)*(N+1),(2.0/3.0),hv[i][j],1);
+            cblas_daxpy((N+1)*(N+1),(1.0/3.0),eta_prev[i][j],1,eta[i][j],1);
+            cblas_daxpy((N+1)*(N+1),(1.0/3.0),hu_prev[i][j],1,hu[i][j],1);
+            cblas_daxpy((N+1)*(N+1),(1.0/3.0),hv_prev[i][j],1,hv[i][j],1);
+        }
+    updateVelocities();
+
 
     return ;
 }
@@ -540,7 +566,7 @@ void ShallowWater::solve()
     for(t=0;t<NTimeSteps;t++)
     {
         printf("Time t=%6.3f\tCourant Number=%6.2f\n",(t+1.0)*dt,Lambda*dt*(1.0/dy+1.0/dx) );
-        RK2();
+        RK3();
     }
 
     return ;
