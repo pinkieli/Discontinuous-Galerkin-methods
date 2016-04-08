@@ -102,7 +102,7 @@ public:
     void operateFlux();
     void operateInverseMass();
     void copyField();
-    void plotSolution(string );
+    void plotSolution(double , double ,string );
     void RK3();
     void updateVelocities();
     void solve();
@@ -321,11 +321,11 @@ void ShallowWater::computeFlux()
                 eta_XFlux[i][j][k]  = eta[i][j][k]*u[i][j][k];
                 eta_YFlux[i][j][k]  = eta[i][j][k]*v[i][j][k];
 
-                hu_XFlux[i][j][k]  = eta[i][j][k]*u[i][j][k]*u[i][j][k]-0.5*G*eta[i][j][k]*eta[i][j][k];
+                hu_XFlux[i][j][k]  = eta[i][j][k]*u[i][j][k]*u[i][j][k] +   0.5*G*eta[i][j][k]*eta[i][j][k];
                 hu_YFlux[i][j][k]  = eta[i][j][k]*u[i][j][k]*v[i][j][k];
 
                 hv_XFlux[i][j][k]  = eta[i][j][k]*u[i][j][k]*v[i][j][k];
-                hv_YFlux[i][j][k]  = eta[i][j][k]*v[i][j][k]*v[i][j][k]-0.5*G*eta[i][j][k]*eta[i][j][k];
+                hv_YFlux[i][j][k]  = eta[i][j][k]*v[i][j][k]*v[i][j][k] +   0.5*G*eta[i][j][k]*eta[i][j][k];
             }
         }
     }
@@ -572,7 +572,7 @@ void ShallowWater::solve()
     return ;
 }
 
-void ShallowWater::plotSolution(string s)
+void ShallowWater::plotSolution(double Z1, double Z2, string s)
 {
     double CG[Ney*N+1][Nex*N+1],CGX[Ney*N+1][Nex*N+1],CGY[Ney*N+1][Nex*N+1];
     zeros(*CG,Ney*N+1,Nex*N+1);
@@ -718,7 +718,7 @@ void ShallowWater::plotSolution(string s)
         CGY[Ney*N][j]=2*CGY[Ney*N][j];
     }
 
-    plot(*CGX,*CGY,*CG,Ney*N+1,Nex*N+1,s);
+    plot(*CGX,*CGY,*CG,Ney*N+1,Nex*N+1,L_start,L_end,H_start,H_end,Z1,Z2,s);
 
     return ;
 }

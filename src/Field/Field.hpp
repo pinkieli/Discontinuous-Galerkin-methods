@@ -73,7 +73,7 @@ public:
     void operateFlux(double *,double *,double *,double *);
     void operateInvereseMass(double *);
     void copyField(double ***);
-    void plotSolution(string );
+    void plotSolution(double , double , string );
     void solve();
 };
 
@@ -329,7 +329,7 @@ void Field::copyField(double ***q)
     return ;
 }
 
-void Field::plotSolution(string s)
+void Field::plotSolution(double Z1, double Z2, string s)
 {
     double CG[Ney*N+1][Nex*N+1],CGX[Ney*N+1][Nex*N+1],CGY[Ney*N+1][Nex*N+1];
     zeros(*CG,Ney*N+1,Nex*N+1);
@@ -475,7 +475,7 @@ void Field::plotSolution(string s)
         CGY[Ney*N][j]=2*CGY[Ney*N][j];
     }
 
-    plot(*CGX,*CGY,*CG,Ney*N+1,Nex*N+1,s);
+    plot(*CGX,*CGY,*CG,Ney*N+1,Nex*N+1,L_start,L_end,H_start,H_end,Z1,Z2,s);
 
     return ;
 }

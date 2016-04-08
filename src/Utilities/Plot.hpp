@@ -7,7 +7,7 @@ using namespace std;
 #ifndef Plot_HPP
 #define Plot_HPP
 
-void plot(double *X, double *Y, double *Z, unsigned Nx, unsigned Ny, string Name)
+void plot(double *X, double *Y, double *Z, unsigned Nx, unsigned Ny,double X1, double X2,double Y1, double Y2,double Z1, double Z2, string Name)
 {
     int i;
     FILE* pfile;
@@ -24,8 +24,11 @@ void plot(double *X, double *Y, double *Z, unsigned Nx, unsigned Ny, string Name
     printf("load X.dat;\n");
     printf("load Y.dat;\n");
     printf("load Z.dat;\n");
+    printf("h=figure(1);\n");
     printf("surf(X,Y,Z);\n");
-    printf("print -djpg %s.jpg;\n",Name.c_str());
+    printf("axis([%.2f %.2f %.2f %.2f %.2f %.2f]);\n",X1,X2,Y1,Y2,Z1,Z2);
+    printf("H = 8; W = 8;\nset(h,\'PaperUnits\',\'inches\');\nset(h,\'PaperOrientation\',\'portrait\');\nset(h,\'PaperSize\',[H,W]);\n");
+    printf("print(h,\'-djpg\',\'-color\',\'%s.jpg\');\n",Name.c_str());
     fclose(stdout);
 
     pfile=freopen ("/dev/tty", "a", stdout);
