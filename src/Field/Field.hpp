@@ -248,8 +248,8 @@ void Field::computeNumericalFlux(double ***f_preX, double ***f_preY )
         {
             for(k=0;k<=N;k++)
             {
-                XFlux[i][j][k*(N+1)]    =   0.5*(f_preX[i][j][k*(N+1)] + f_preX[i][j-1][k*(N+1) + N] - Lambda*(ConsVariable[i][j][k*(N+1)]-ConsVariable[i][j-1][k*(N+1)+N]) );
-                XFlux[i][j-1][k*(N+1)+N]=   0.5*(f_preX[i][j][k*(N+1)] + f_preX[i][j-1][k*(N+1) + N] - Lambda*(ConsVariable[i][j][k*(N+1)]-ConsVariable[i][j-1][k*(N+1)+N]) );
+                XFlux[i][j][k*(N+1)]    =   0.5*(f_preX[i][j][k*(N+1)] + f_preX[i][j-1][k*(N+1) + N] - (MAX((ABS(U[i][j][k*(N+1)])),(ABS(U[i][j-1][k*(N+1)+N]))))*(ConsVariable[i][j][k*(N+1)]-ConsVariable[i][j-1][k*(N+1)+N]) );
+                XFlux[i][j-1][k*(N+1)+N]=   0.5*(f_preX[i][j][k*(N+1)] + f_preX[i][j-1][k*(N+1) + N] - (MAX((ABS(U[i][j][k*(N+1)])),(ABS(U[i][j-1][k*(N+1)+N]))))*(ConsVariable[i][j][k*(N+1)]-ConsVariable[i][j-1][k*(N+1)+N]) );
             }
         }
     }
@@ -260,8 +260,8 @@ void Field::computeNumericalFlux(double ***f_preX, double ***f_preY )
     {
         for(k=0;k<=N;k++)
         {
-            XFlux[i][j][k*(N+1)]        =   0.5*(f_preX[i][j][k*(N+1)] + f_preX[i][Nex-1][k*(N+1) + N] - Lambda*(ConsVariable[i][j][k*(N+1)]-ConsVariable[i][Nex-1][k*(N+1)+N]) );
-            XFlux[i][Nex-1][k*(N+1)+N]  =   0.5*(f_preX[i][j][k*(N+1)] + f_preX[i][Nex-1][k*(N+1) + N] - Lambda*(ConsVariable[i][j][k*(N+1)]-ConsVariable[i][Nex-1][k*(N+1)+N]) );
+            XFlux[i][j][k*(N+1)]        =   0.5*(f_preX[i][j][k*(N+1)] + f_preX[i][Nex-1][k*(N+1) + N] - (MAX((ABS(U[i][j][k*(N+1)])),(ABS(U[i][Nex-1][k*(N+1) + N]))))*(ConsVariable[i][j][k*(N+1)]-ConsVariable[i][Nex-1][k*(N+1)+N]) );
+            XFlux[i][Nex-1][k*(N+1)+N]  =   0.5*(f_preX[i][j][k*(N+1)] + f_preX[i][Nex-1][k*(N+1) + N] - (MAX((ABS(U[i][j][k*(N+1)])),(ABS(U[i][Nex-1][k*(N+1) + N]))))*(ConsVariable[i][j][k*(N+1)]-ConsVariable[i][Nex-1][k*(N+1)+N]) );
         }
     }
 
@@ -271,8 +271,8 @@ void Field::computeNumericalFlux(double ***f_preX, double ***f_preY )
         {
             for(k=0;k<=N;k++)
             {
-                YFlux[i][j][k]              =   0.5*(f_preY[i][j][k] + f_preY[i-1][j][k + N*(N+1)] - Lambda*(ConsVariable[i][j][k] - ConsVariable[i-1][j][k + N*(N+1)]) );
-                YFlux[i-1][j][k + N*(N+1)]  =   0.5*(f_preY[i][j][k] + f_preY[i-1][j][k + N*(N+1)] - Lambda*(ConsVariable[i][j][k] - ConsVariable[i-1][j][k + N*(N+1)]) );
+                YFlux[i][j][k]              =   0.5*(f_preY[i][j][k] + f_preY[i-1][j][k + N*(N+1)] - (MAX((ABS(V[i][j][k])),(ABS(V[i-1][j][k + N*(N+1)]))))*(ConsVariable[i][j][k] - ConsVariable[i-1][j][k + N*(N+1)]) );
+                YFlux[i-1][j][k + N*(N+1)]  =   0.5*(f_preY[i][j][k] + f_preY[i-1][j][k + N*(N+1)] - (MAX((ABS(V[i][j][k])),(ABS(V[i-1][j][k + N*(N+1)]))))*(ConsVariable[i][j][k] - ConsVariable[i-1][j][k + N*(N+1)]) );
             }
         }
     }
@@ -283,8 +283,8 @@ void Field::computeNumericalFlux(double ***f_preX, double ***f_preY )
     {
         for(k=0;k<=N;k++)
         {
-            YFlux[i][j][k]                  =   0.5*(f_preY[i][j][k] + f_preY[Ney-1][j][k + N*(N+1)] - Lambda*(ConsVariable[i][j][k] - ConsVariable[Ney-1][j][k + N*(N+1)]) );
-            YFlux[Ney-1][j][k + N*(N+1)]    =   0.5*(f_preY[i][j][k] + f_preY[Ney-1][j][k + N*(N+1)] - Lambda*(ConsVariable[i][j][k] - ConsVariable[Ney-1][j][k + N*(N+1)]) );
+            YFlux[i][j][k]                  =   0.5*(f_preY[i][j][k] + f_preY[Ney-1][j][k + N*(N+1)] - (MAX((ABS(V[i][j][k])),(ABS(V[Ney-1][j][k + N*(N+1)]))))*(ConsVariable[i][j][k] - ConsVariable[Ney-1][j][k + N*(N+1)]) );
+            YFlux[Ney-1][j][k + N*(N+1)]    =   0.5*(f_preY[i][j][k] + f_preY[Ney-1][j][k + N*(N+1)] - (MAX((ABS(V[i][j][k])),(ABS(V[Ney-1][j][k + N*(N+1)]))))*(ConsVariable[i][j][k] - ConsVariable[Ney-1][j][k + N*(N+1)]) );
         }
     }
 
