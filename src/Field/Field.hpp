@@ -75,6 +75,7 @@ public:
     void copyField(double ***);
     void plotSolution(double , double , string );
     void solve();
+    double L2Error(function<double(double,double)>);
 };
 
 Field::Field(unsigned Nx, unsigned Ny, unsigned n)
@@ -180,27 +181,13 @@ void Field::computeLambda()
     {
         for(j=0;j<Nex;j++)
         {
-            for(k=0;k<=N;k++)
+            for(k=0;k<((N+1)*(N+1));k++)
             {
                 Lambda  =   MAX(Lambda,ABS(V[i][j][k]));
-                Lambda  =   MAX(Lambda,ABS(U[i][j][k*(N+1)]));
+                Lambda  =   MAX(Lambda,ABS(U[i][j][k]));
             }
         }
     }
-
-    j   =   Nex-1;
-
-    for(i=0;i<Ney;i++)
-        for(k=0;k<=N;k++)
-            Lambda  =   MAX(Lambda,ABS(U[i][j][k*(N+1)+N]));
-
-    i   =   Ney-1;
-
-    for(j=0;j<Nex;j++)
-        for(k=0;k<=N;k++)
-            Lambda  =   MAX(Lambda,ABS(V[i][j][k + N*(N+1) ]));
-
-
 
     return ;
 }
@@ -534,13 +521,44 @@ void Field::solve()
             for(j=0;j<Nex;j++)
             {
                 cblas_daxpy((N+1)*(N+1),dt,Rate[i][j],1,ConsVariable[i][j],1);
-                cblas_dscal((N+1)*(N+1),0.5,ConsVariable[i][j],1);
-                cblas_daxpy((N+1)*(N+1),0.5,q0[i][j],1,ConsVariable[i][j],1);
+                cblas_dscal((N+1)*(N+1),0.25,ConsVariable[i][j],1);
+                cblas_daxpy((N+1)*(N+1),0.75,q0[i][j],1,ConsVariable[i][j],1);
             }
-
+        // TODO: Use RK3 over here.
+        computeFlux(f_preX,f_preY);
+        operateDerivative(f_preX,f_preY,*DerivativeMatrixX,*DerivativeMatrixY);
+        computeNumericalFlux(f_preX, f_preY);
+        operateFlux(*Flux1,*Flux2,*Flux3,*Flux4);
+        operateInvereseMass(*MassInverse);
+        //q (2) = 0.5*q(0) + 0.5*q(1) + 0.5*∆tR(q (1));
+        for(i=0;i<Ney;i++)
+            for(j=0;j<Nex;j++)
+            {
+                cblas_daxpy((N+1)*(N+1),dt,Rate[i][j],1,ConsVariable[i][j],1);
+                cblas_dscal((N+1)*(N+1),(2.0/3.0),ConsVariable[i][j],1);
+                cblas_daxpy((N+1)*(N+1),(1.0/3.0),q0[i][j],1,ConsVariable[i][j],1);
+            }
     }
 
     return ;
+}
+
+double  Field::L2Error(function<double(double,double)> Exact)
+{
+    double error_num = 0.0,error_den=0.0;
+    double exact    =   0.0;
+
+    unsigned i,j,k;
+    for(i=0;i<Nex;i++)
+        for(j=0;j<Ney;j++)
+            for(k=0;k<((N+1)*(N+1));k++)
+                {
+                    exact       =   Exact(X[i][j][k],Y[i][j][k]);
+                    error_num   +=  ((exact-ConsVariable[i][j][k])*(exact-ConsVariable[i][j][k]));
+                    error_den   +=  (exact*exact);
+                }
+
+    return (sqrt(error_num/error_den));
 }
 
 #endif

@@ -300,8 +300,6 @@ void ShallowWater::computeRHS()
                 eta_RHS[i][j][k]    =   0.0;
                 hu_RHS[i][j][k]     =   -G*eta[i][j][k]*H_x[i][j][k];
                 hv_RHS[i][j][k]     =   -G*eta[i][j][k]*H_y[i][j][k];
-                //hu_RHS[i][j][k]     =   0.0;
-                //hv_RHS[i][j][k]     =   0.0;
             }
 
 

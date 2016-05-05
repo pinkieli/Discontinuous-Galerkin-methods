@@ -1,31 +1,35 @@
 #include "src/includes.hpp"
 #include <cmath>
 
-#define U0  1.0
+#define NEL 28
 
 double U(double x, double y)
 {
-    return U0;
+    return y;
 }
 
 double V(double x, double y)
 {
-    return 0.0;
+    return -x;
 }
 
 double initialConditions(double x, double y)
 {
-    if((x<0.2)&&(x>-0.2)&&(y<0.2)&&(y>-0.2))
-        return 1;
-    else
-        return 0;
+    return (exp(-32*((x+0.5)*(x+0.5)+y*y)));;
+}
+
+double exactSolution(double x, double y)
+{
+    double x0   =   -0.5*cos(6.250);
+    double y0   =   0.5*sin(6.250);;
+    return (exp(-32*((x-x0)*(x-x0)+(y-y0)*(y-y0))));;
 }
 
 int main()
 {
-    unsigned    Nex =   20;
-    unsigned    Ney =   20;
-    unsigned    N   =   8;
+    unsigned    Nex =   NEL;
+    unsigned    Ney =   NEL;
+    unsigned    N   =   2;
     double L_start  =   -1;
     double L_end    =   1;
     double H_start  =   -1;
@@ -34,9 +38,10 @@ int main()
     q.setDomain(L_start,L_end,H_start,H_end);
     q.setVelocity(U,V);
     q.setInitialConditions(initialConditions);
-    q.setSolver(5e-4,0);
+    q.setSolver(0.0625*0.5*(1.0/NEL),100*2*(NEL));
     q.solve();
-    q.plotSolution(0,1,"t=0sec");
+    q.plotSolution(0,1,"t=2sec");
+    printf("%6.6f\tfor N = %d N_p = %d\n",q.L2Error(exactSolution),N,(Nex*Ney*(N+1)*(N+1)));
 
     return 0;
 }
