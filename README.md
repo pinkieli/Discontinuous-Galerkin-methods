@@ -46,7 +46,10 @@
         - **Brief**: This subroutine finds the inverse of a matrix `A` and stores in the matrix `Ainv`.
         - **Usage**: `inverse(&A[0][0],&Ainv[0][0],3)`, where `A` and `Ainv` are statically declared 2-D arrays with dimensions `3x3`.
 
+## License
+
+You can find all the details over here [LICENSE](https://github.com/kaushikcfd/Discontinuous-Galerkin/blob/master/LICENSE.md).
 
 ## Contact
 
-If you have any questions about the usage or contribution, drop me a mail at `kaushikcfd@gmail.com`.
+If you have any questions about the usage or contribution, feel free to drop a mail at `kaushikcfd@gmail.com` or `sgopalak@iitb.ac.in`.
