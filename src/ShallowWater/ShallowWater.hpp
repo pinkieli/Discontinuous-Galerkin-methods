@@ -110,10 +110,19 @@ public:
 
 ShallowWater::ShallowWater(unsigned Nx, unsigned Ny, unsigned n)
 {
+    /**
+    * The constructor for the ShallowWatter class. It takes 3 inputs that defines the solver.
+    * The number of elements in the X-direction. [Nex]
+    * The number of elements in the Y-direction. [Ney]
+    * The order of the polynomials with which each element is to be interpolated.
+    */
     Nex =   Nx;
     Ney =   Ny;
     N   =   n;
 
+    /**
+    * The memory allocation for all the 3-d/ 2-d array is being done.
+    */
     eta             =   create3D(Ney,Nex,(N+1)*(N+1));
     H               =   create3D(Ney,Nex,(N+1)*(N+1));
     H_x             =   create3D(Ney,Nex,(N+1)*(N+1));
@@ -173,6 +182,14 @@ ShallowWater::ShallowWater(unsigned Nx, unsigned Ny, unsigned n)
 
 void ShallowWater::setDomain(double L1, double L2, double L3, double L4)
 {
+    /**
+    * This function sets the Domain for the solver.
+    * It takes 4 inputs :
+    * L1: X-starting co-ordinate.
+    * L3: Y-starting co-ordinate.
+    * L2: X-ending co-ordinate
+    * L4: Y-ending co-ordinate.
+    */
     unsigned i,j,k1,k2;
     L_start =   L1;
     L_end   =   L2;
@@ -184,9 +201,19 @@ void ShallowWater::setDomain(double L1, double L2, double L3, double L4)
     double Nodes[N+1];
     lobattoNodes(Nodes,N+1);
 
+    /**
+    * Once the domain is known the `dx` and `dy` can be calculated.
+    */
     dx  =   (L_end-L_start)/Nex;
     dy  =   (H_end-H_start)/Ney;
 
+    /**
+    * Since, the domain is known, using the information calculating the grid.
+    * The variables X[i][j][k] and Y[i][j][k] stores the information about the Domain.
+    * Where `i` denotes the serial number of the Element in the Y-direction. Range: [0, Ney)
+    * Where `j` denotes the serial number of the Element in the X-direction. Range: [0, Nex)
+    * Where `k` denotes the serial number of the grid points in an single Element. Range: [0, (N+1)*(N+1))
+    */
     Ystart  =   H_start;
     Yend    =   Ystart+dy;
 
@@ -214,6 +241,10 @@ void ShallowWater::setDomain(double L1, double L2, double L3, double L4)
 }
 
 
+/**
+ * @brief   ShallowWater:: setDepth -- [This function is used to set the Bathymetry `depth` of the Shallow Water. Hence, the membr variable H[i][j][k] is initialized in the function].
+ * @param in function<double(double,double)> A [The function takes two values `double x, double y` and returns the Depth. Hence the depth is initialized using a function.]
+ */
 void ShallowWater::setDepth(function<double(double, double)> A)
 {
     unsigned i,j,k;
@@ -224,6 +255,9 @@ void ShallowWater::setDepth(function<double(double, double)> A)
             for (k=0;k<((N+1)*(N+1));k++)
                 H[i][j][k]  =   A(X[i][j][k],Y[i][j][k]);
 
+            /**
+             * Knowing the Bathymetry Height the RHS can be initialized.
+             */
             cblas_dgemv(CblasRowMajor,CblasNoTrans,(N+1)*(N+1),(N+1)*(N+1),0.5*dy,DerivativeMatrixX,(N+1)*(N+1),H[i][j],1,0,H_x[i][j],1);
             cblas_dgemv(CblasRowMajor,CblasNoTrans,(N+1)*(N+1),(N+1)*(N+1),0.5*dx,DerivativeMatrixY,(N+1)*(N+1),H[i][j],1,0,H_y[i][j],1);
         }
@@ -232,7 +266,12 @@ void ShallowWater::setDepth(function<double(double, double)> A)
     return ;
 }
 
-
+/**
+ * The function `ShallowWater::setInitialConditions(function<double(double,double)> A, function<double(double,double)> B, function<double(double,double)> C)` takes input as 3 functions, each of which separately sets the initial Conditions for the eta(x,y), u(x,y) and v(x,y).
+ * @param in function<double(double,double)> A [This function gives the Initial Condition for eta(x,y)]
+ * @param in function<double(double,double)> B [This function gives the Initial Condition for u(x,y)]
+ * @param in function<double(double,double)> C [This function gives the Initial Condition for v(x,y)]
+ */
 void ShallowWater::setInitialConditions(function<double(double,double)> A, function<double(double,double)> B, function<double(double,double)> C)
 {
     unsigned i,j,k;
@@ -252,6 +291,11 @@ void ShallowWater::setInitialConditions(function<double(double,double)> A, funct
     return ;
 }
 
+/**
+ * The Important parameter of the function i.e. time Step (`dt`) and Number of Time Steps (`NTimeSteps`) is decided in this function.
+ * @param a First Inuput is the `dt`
+ * @param b Second Input is the `NTimeSteps`
+ */
 void ShallowWater::setSolver(double a, unsigned b)
 {
     dt          =   a;
@@ -260,7 +304,6 @@ void ShallowWater::setSolver(double a, unsigned b)
 
 void ShallowWater::computeLambda()
 {
-
     Lambda = 0;
     unsigned i,j,k;
     for(i=0;i<Ney;i++)
@@ -290,23 +333,29 @@ void ShallowWater::computeLambda()
     return ;
 }
 
+/**
+ * In each iteration of the RK3, the eta, u, v changes and due to the same point the RHS gets changes, since the `eta` changes.
+ */
 void ShallowWater::computeRHS()
 {
     unsigned i,j,k;
-    for(i=0;i<Ney;i++)
-        for(j=0;j<Nex;j++)
-            for(k=0;k<((N+1)*(N+1));k++)
+    for(i=0;i<Ney;i++)/*Iterating through the elements along the Y- directiion.*/
+        for(j=0;j<Nex;j++)/*Iterating thorugh the elements along the X- direction.*/
+            for(k=0;k<((N+1)*(N+1));k++)/*After closing down a single element, iterating through the (N+1)*(N+1) grid points within that element.*/
             {
-                eta_RHS[i][j][k]    =   0.0;
-                hu_RHS[i][j][k]     =   -G*eta[i][j][k]*H_x[i][j][k];
-                hv_RHS[i][j][k]     =   -G*eta[i][j][k]*H_y[i][j][k];
+                eta_RHS[i][j][k]    =   0.0;/*The RHS term for first equation when `eta` is the conservative variable.*/
+                hu_RHS[i][j][k]     =   -G*eta[i][j][k]*H_x[i][j][k];/*The RHS for the second equation when `hu` is the conservtive variable.*/
+                hv_RHS[i][j][k]     =   -G*eta[i][j][k]*H_y[i][j][k];/*The RHS term for the third equation when `hv` is the conservative variable.*/
             }
-
-
     return ;
 }
 
-
+/**
+ * In this function the flux terms for the conservative form of equations is calculated. Each of thd Conservativve variable: eta, eta*u, etau*v has 2 flux terms each. That is the
+ * The flux term for the eta is given by \f$\left( \eta u, \eta v\right)\f$.
+ * The flux term for the U is given by \f$\left( \eta u^2 + \frac{g*\eta^2}{2}, \eta uv\right)\f$.
+ * The flux term for the U is given by \f$\left( \eta uv, \eta v^2 + \frac{g*\eta^2}{2} \right)\f$.
+ */
 void ShallowWater::computeFlux()
 {
     unsigned i,j,k;
@@ -329,6 +378,10 @@ void ShallowWater::computeFlux()
     }
     return ;
 }
+
+/**
+ * The numerical flux has to be calculated, which defines the interaction between the adjacent elements. In the following code, Rusanov Flux has been used. The numerical fluz only has to be calculated along the edges. And the same is done.
+ */
 void ShallowWater::computeNumericalFlux( )
 {
     unsigned i,j,k;
@@ -347,7 +400,8 @@ void ShallowWater::computeNumericalFlux( )
             }
         }
     }
-
+    /**
+    * Uncomment these only for Periodic Boundary Conditions.
     j=0;
     for(i=0;i<Ney;i++)
     {
@@ -361,6 +415,27 @@ void ShallowWater::computeNumericalFlux( )
 
         }
     }
+    */
+
+   /**
+    * Writing the Boundary Conditions for the Bath-Tub model.
+    */
+
+    j=0;
+    for(i=0;i<Ney;i++)
+    {
+        for(k=0;k<=N;k++)
+        {
+            eta_XFlux_num[i][j][k*(N+1)]        =   0;
+            eta_XFlux_num[i][Nex-1][k*(N+1)+N]  =   0;
+
+            hu_XFlux_num[i][j][k*(N+1)]         =   0;
+            hu_XFlux_num[i][Nex-1][k*(N+1)+N]   =   0;
+
+            hv_XFlux_num[i][j][k*(N+1)]         =   0;
+            hv_XFlux_num[i][Nex-1][k*(N+1)+N]   =   0;
+        }
+    }/*The Bath-Tub Boundary Conditions for the X-direction end here.*/
 
     for(i=1;i<Ney;i++)
     {
@@ -377,8 +452,9 @@ void ShallowWater::computeNumericalFlux( )
         }
     }
 
+    /***
+    * Uncomment these lines only for periodic Boundary Conditions.
     i=0;
-
     for(j=0;j<Nex;j++)
     {
         for(k=0;k<=N;k++)
@@ -391,9 +467,32 @@ void ShallowWater::computeNumericalFlux( )
 
         }
     }
+    */
 
+    /**
+     * The lines below denote the conditions for the Bath-Tub Model Boundary Conditions.
+     */
+    i=0;
+    for(j=0;j<Nex;j++)
+    {
+        for(k=0;k<=N;k++)
+        {
+            eta_YFlux_num[i][j][k]                  =   0;
+            eta_YFlux_num[Ney-1][j][k + N*(N+1)]    =   0;
+
+            hu_YFlux_num[i][j][k]                   =   0;
+            hu_YFlux_num[Ney-1][j][k + N*(N+1)]     =   0;
+
+            hv_YFlux_num[i][j][k]                   =   0;
+            hv_YFlux_num[Ney-1][j][k + N*(N+1)]     =   0;
+        }
+    }/*The Bath-Tub Model Coundary Conditions End.*/
     return ;
 }
+
+/**
+ * This function operates the Derivative Matrix on the flux terms of the conservative variables, and gets added in the RHS. Here BLAS and LAPACK functions have been used here for performing the linear operations.
+ */
 void ShallowWater::operateDerivative( )
 {
     unsigned i,j;
@@ -414,7 +513,9 @@ void ShallowWater::operateDerivative( )
     }
     return ;
 }
-
+/**
+ * `ShallowWater::operateFlux` : In this function the Flux Matrices are operated on the Numerical Flux Column vectors, and then added to the RHS.
+ */
 void ShallowWater::operateFlux()
 {
     unsigned i,j;
@@ -443,6 +544,10 @@ void ShallowWater::operateFlux()
     return ;
 }
 
+/**
+ * `ShallowWater::operateInverseMass` : In this function the Mass Inverse Matrix is operated on the RHS column vector. Hence after operting this, we are only left with the time derivative term on the LHS.
+ */
+
 void ShallowWater::operateInverseMass()
 {
     unsigned i,j;
@@ -454,11 +559,12 @@ void ShallowWater::operateInverseMass()
             cblas_dgemv(CblasRowMajor,CblasNoTrans,(N+1)*(N+1),(N+1)*(N+1),alpha,MassInverse,(N+1)*(N+1),hu_RHS[i][j],1,0,hu_Rate[i][j],1);
             cblas_dgemv(CblasRowMajor,CblasNoTrans,(N+1)*(N+1),(N+1)*(N+1),alpha,MassInverse,(N+1)*(N+1),hv_RHS[i][j],1,0,hv_Rate[i][j],1);
         }
-
-
     return ;
 }
 
+/**
+ * ShallowWater::copyField : This creates a copy of the conservative variables, as we need to use the earlier time step values at
+ */
 void ShallowWater::copyField()
 {
     unsigned i,j;
@@ -552,7 +658,6 @@ void ShallowWater::RK3()
             cblas_daxpy((N+1)*(N+1),(1.0/3.0),hv_prev[i][j],1,hv[i][j],1);
         }
     updateVelocities();
-
 
     return ;
 }

@@ -1,47 +1,56 @@
 #include "src/includes.hpp"
 #include <cmath>
+#include <string>
+using namespace std;
 
-#define NEL 28
 
 double U(double x, double y)
 {
-    return y;
+    return 0.0;
 }
 
 double V(double x, double y)
 {
-    return -x;
+    return 0.0;
 }
 
-double initialConditions(double x, double y)
+double eta(double x, double y)
 {
-    return (exp(-32*((x+0.5)*(x+0.5)+y*y)));;
+    return (exp(-16*(x*x+y*y)));
 }
 
-double exactSolution(double x, double y)
+double Depth(double x, double y)
 {
-    double x0   =   -0.5*cos(6.250);
-    double y0   =   0.5*sin(6.250);;
-    return (exp(-32*((x-x0)*(x-x0)+(y-y0)*(y-y0))));;
+    return 2.0;
 }
-
 int main()
 {
-    unsigned    Nex =   NEL;
-    unsigned    Ney =   NEL;
-    unsigned    N   =   2;
-    double L_start  =   -1;
-    double L_end    =   1;
-    double H_start  =   -1;
-    double H_end    =   1;
-    Field q(Nex,Ney,N);
+    string name;
+    unsigned    Nex =   20;
+    unsigned    Ney =   20;
+    unsigned    N   =   4 ;
+    double L_start  =   -2;
+    double L_end    =   2;
+    double H_start  =   -2;
+    double H_end    =   2;
+    unsigned NTimeSteps =200;
+    double dt  =   1e-5;
+    unsigned i=0;
+
+
+    ShallowWater q(Nex,Ney,N);
     q.setDomain(L_start,L_end,H_start,H_end);
-    q.setVelocity(U,V);
-    q.setInitialConditions(initialConditions);
-    q.setSolver(0.0625*0.5*(1.0/NEL),100*2*(NEL));
-    q.solve();
-    q.plotSolution(0,1,"t=2sec");
-    printf("%6.6f\tfor N = %d N_p = %d\n",q.L2Error(exactSolution),N,(Nex*Ney*(N+1)*(N+1)));
+    q.setDepth(Depth);
+    q.setInitialConditions(eta,U,V);
+    q.setSolver(dt,NTimeSteps);
+    for(i=0;i<50;i++)
+    {
+        name =  "t="+to_string(i*NTimeSteps*dt)+"s";
+        q.plotSolution(0.0,3.0,name);
+        q.solve();
+    }
+    name =  "t="+to_string(i*NTimeSteps*dt)+"s";
+    q.plotSolution(0.0,3.0,name);
 
     return 0;
 }
