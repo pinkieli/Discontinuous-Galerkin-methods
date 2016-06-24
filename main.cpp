@@ -3,25 +3,54 @@
 #include <string>
 using namespace std;
 
-double f(double x) {
-    return cos(x);
+
+double U(double x, double y)
+{
+    return 0.0;
 }
 
-int main()  {
-    unsigned N = 1000;
-    double L_start  =   -3.14159;
-    double L_end    =    3.14159;
-    double h        =   (L_end-L_start)/N;
-    unsigned i;
-    double X[N],Y[N];
-    X[0]    =   L_start;
-    Y[0]    =   f(X[0]);
-    for(i=1;i<N;i++) {
-        X[i]    =   X[i-1]  +   h;
-        Y[i]    =   f(X[i]);
-    }
+double V(double x, double y)
+{
+    return 0.0;
+}
 
-    plot(X,Y,N,"Try","Density","CoSine");
+double eta(double x, double y)
+{
+    return (exp(-16*((x)*(x)+y*y)));
+}
+
+double Depth(double x, double y)
+{
+    return 2.0;
+}
+int main()
+{
+    string name;
+    unsigned    Nex =   20;
+    unsigned    Ney =   20;
+    unsigned    N   =   4 ;
+    double L_start  =   -2;
+    double L_end    =   2;
+    double H_start  =   -2;
+    double H_end    =   2;
+    unsigned NTimeSteps =600;
+    double dt  =  1e-3;
+    unsigned i;
+
+
+    ShallowWater q(Nex,Ney,N);
+    q.setDomain(L_start,L_end,H_start,H_end);
+    q.setDepth(Depth);
+    q.setInitialConditions(eta,U,V);
+    q.setSolver(dt,NTimeSteps);
+    for(i=0;i<1;i++)
+    {
+        name =  "t="+to_string(i*NTimeSteps*dt)+"s";
+        q.plotSolution(0.0,3.0,name);
+        q.solve();
+    }
+    name =  "t="+to_string(i*NTimeSteps*dt)+"s";
+    q.plotSolution(0.0,3.0,name);
 
     return 0;
 }

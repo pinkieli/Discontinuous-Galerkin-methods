@@ -1,4 +1,4 @@
-#include <lapacke.h>
+	#include <lapacke.h>
 #include <functional>
 #include <cstring>
 #include <cblas.h>
@@ -14,7 +14,7 @@
 #include "../Elemental/FluxMatrix.hpp"
 
 #define MAX(a, b)(a>b?a:b)
-#define ABS(a)(a>0?a:(-a))
+#define ABS(a)(a>0.0?a:(-a))
 #define G  9.81
 
 using namespace std;
@@ -72,7 +72,7 @@ private:
 
     /**
     * In- class created variables the variables ahead have no physical significance, just are defined as function properties so as to faciliate the transmission of data from one member function to the another.
-    *  Lambda   =   The max of absolute value of the eigen value. It is used for compiuting the Rusanov Flux.
+    * Lambda   =   The max of absolute value of the eigen value. It is used for compiuting the Rusanov Flux.
     */
     double ***eta_RHS,***hu_RHS,***hv_RHS;
     double ***eta_Rate,***hu_Rate,***hv_Rate;
@@ -102,10 +102,10 @@ public:
     void operateFlux();
     void operateInverseMass();
     void copyField();
-    void plotSolution(double , double ,string );
     void RK3();
     void updateVelocities();
     void solve();
+    void plotSolution(double , double ,string );
 };
 
 ShallowWater::ShallowWater(unsigned Nx, unsigned Ny, unsigned n)
@@ -344,8 +344,8 @@ void ShallowWater::computeRHS()
             for(k=0;k<((N+1)*(N+1));k++)/*After closing down a single element, iterating through the (N+1)*(N+1) grid points within that element.*/
             {
                 eta_RHS[i][j][k]    =   0.0;/*The RHS term for first equation when `eta` is the conservative variable.*/
-                hu_RHS[i][j][k]     =   -G*eta[i][j][k]*H_x[i][j][k];/*The RHS for the second equation when `hu` is the conservtive variable.*/
-                hv_RHS[i][j][k]     =   -G*eta[i][j][k]*H_y[i][j][k];/*The RHS term for the third equation when `hv` is the conservative variable.*/
+                hu_RHS[i][j][k]     =   0.0;//-G*eta[i][j][k]*H_x[i][j][k];/*The RHS for the second equation when `hu` is the conservtive variable.*/
+                hv_RHS[i][j][k]     =   0.0;//-G*eta[i][j][k]*H_y[i][j][k];/*The RHS term for the third equation when `hv` is the conservative variable.*/
             }
     return ;
 }
@@ -386,6 +386,11 @@ void ShallowWater::computeNumericalFlux( )
 {
     unsigned i,j,k;
 
+    /**
+    * The next two big `TRIPLY-NESTED` for loops are for the flux calculations of the internal points.
+    */
+
+    //Internal Nodes X-direction.
     for(i=0;i<Ney;i++)
     {
         for(j=1;j<Nex;j++)
@@ -400,43 +405,8 @@ void ShallowWater::computeNumericalFlux( )
             }
         }
     }
-    /**
-    * Uncomment these only for Periodic Boundary Conditions.
-    j=0;
-    for(i=0;i<Ney;i++)
-    {
-        for(k=0;k<=N;k++)
-        {
-            eta_XFlux_num[i][Nex-1][k*(N+1)+N]  =   eta_XFlux_num[i][j][k*(N+1)]    =   0.5*(eta_XFlux[i][j][k*(N+1)] + eta_XFlux[i][Nex-1][k*(N+1) + N] - (MAX((ABS(u[i][j][k*(N+1)])+sqrt(G*(eta[i][j][k*(N+1)]))),(ABS(u[i][Nex-1][k*(N+1) + N])+sqrt(G*(eta[i][Nex-1][k*(N+1) + N])))))*(eta[i][j][k*(N+1)]-eta[i][Nex-1][k*(N+1)+N]) );
 
-            hu_XFlux_num[i][Nex-1][k*(N+1)+N]   =    hu_XFlux_num[i][j][k*(N+1)]    =   0.5*(hu_XFlux[i][j][k*(N+1)] + hu_XFlux[i][Nex-1][k*(N+1) + N] - (MAX((ABS(u[i][j][k*(N+1)])+sqrt(G*(eta[i][j][k*(N+1)]))),(ABS(u[i][Nex-1][k*(N+1) + N])+sqrt(G*(eta[i][Nex-1][k*(N+1) + N])))))*(hu[i][j][k*(N+1)]-hu[i][Nex-1][k*(N+1)+N]) );
-
-            hv_XFlux_num[i][Nex-1][k*(N+1)+N]   =    hv_XFlux_num[i][j][k*(N+1)]    =   0.5*(hv_XFlux[i][j][k*(N+1)] + hv_XFlux[i][Nex-1][k*(N+1) + N] - (MAX((ABS(u[i][j][k*(N+1)])+sqrt(G*(eta[i][j][k*(N+1)]))),(ABS(u[i][Nex-1][k*(N+1) + N])+sqrt(G*(eta[i][Nex-1][k*(N+1) + N])))))*(hv[i][j][k*(N+1)]-hv[i][Nex-1][k*(N+1)+N]) );
-
-        }
-    }
-    */
-
-   /**
-    * Writing the Boundary Conditions for the Bath-Tub model.
-    */
-
-    j=0;
-    for(i=0;i<Ney;i++)
-    {
-        for(k=0;k<=N;k++)
-        {
-            eta_XFlux_num[i][j][k*(N+1)]        =   0;
-            eta_XFlux_num[i][Nex-1][k*(N+1)+N]  =   0;
-
-            hu_XFlux_num[i][j][k*(N+1)]         =   0;
-            hu_XFlux_num[i][Nex-1][k*(N+1)+N]   =   0;
-
-            hv_XFlux_num[i][j][k*(N+1)]         =   0;
-            hv_XFlux_num[i][Nex-1][k*(N+1)+N]   =   0;
-        }
-    }/*The Bath-Tub Boundary Conditions for the X-direction end here.*/
-
+    //Internal Nodes Y-direction
     for(i=1;i<Ney;i++)
     {
         for(j=0;j<Nex;j++)
@@ -450,50 +420,97 @@ void ShallowWater::computeNumericalFlux( )
                 hv_YFlux_num[i-1][j][k + N*(N+1)]  =    hv_YFlux_num[i][j][k]   =   0.5*(hv_YFlux[i][j][k] + hv_YFlux[i-1][j][k + N*(N+1)] - (MAX((ABS(v[i][j][k])+sqrt(G*(eta[i][j][k]))),(ABS(v[i-1][j][k + N*(N+1)])+sqrt(G*(eta[i-1][j][k + N*(N+1)])))))*(hv[i][j][k] - hv[i-1][j][k + N*(N+1)]) );
             }
         }
+    }//Flux- Calculation for the internal nodes end here.
+
+
+/*
+    // Conditions for Periodic Boundary Conditions start here. Hence only the flux at the boundary elements is calculated.
+    j=0;
+    for(i=0;i<Ney;i++)
+    {
+        for(k=0;k<=N;k++)
+        {
+            eta_XFlux_num[i][Nex-1][k*(N+1)+N]  =   eta_XFlux_num[i][j][k*(N+1)]    =   0.5*(eta_XFlux[i][j][k*(N+1)] + eta_XFlux[i][Nex-1][k*(N+1) + N] - (MAX((ABS(u[i][j][k*(N+1)])+sqrt(G*(eta[i][j][k*(N+1)]))),(ABS(u[i][Nex-1][k*(N+1) + N])+sqrt(G*(eta[i][Nex-1][k*(N+1) + N])))))*(eta[i][j][k*(N+1)]-eta[i][Nex-1][k*(N+1)+N]) );
+            if(ABS(eta_XFlux_num[i][Nex-1][k*(N+1)+N])>1e-8)
+                printf("Danda1\n");
+
+            hu_XFlux_num[i][Nex-1][k*(N+1)+N]   =    hu_XFlux_num[i][j][k*(N+1)]    =   0.5*(hu_XFlux[i][j][k*(N+1)] + hu_XFlux[i][Nex-1][k*(N+1) + N] - (MAX((ABS(u[i][j][k*(N+1)])+sqrt(G*(eta[i][j][k*(N+1)]))),(ABS(u[i][Nex-1][k*(N+1) + N])+sqrt(G*(eta[i][Nex-1][k*(N+1) + N])))))*(hu[i][j][k*(N+1)]-hu[i][Nex-1][k*(N+1)+N]) );
+            if(ABS(hu_XFlux_num[i][Nex-1][k*(N+1)+N]-(hu_XFlux[i][j][k*(N+1)]-(ABS(u[i][j][k*(N+1)])+sqrt(G*(eta[i][j][k*(N+1)])))*(hu[i][j][k*(N+1)])))>1e-8)
+                printf("Danda2\n");
+
+            hv_XFlux_num[i][Nex-1][k*(N+1)+N]   =    hv_XFlux_num[i][j][k*(N+1)]    =   0.5*(hv_XFlux[i][j][k*(N+1)] + hv_XFlux[i][Nex-1][k*(N+1) + N] - (MAX((ABS(u[i][j][k*(N+1)])+sqrt(G*(eta[i][j][k*(N+1)]))),(ABS(u[i][Nex-1][k*(N+1) + N])+sqrt(G*(eta[i][Nex-1][k*(N+1) + N])))))*(hv[i][j][k*(N+1)]-hv[i][Nex-1][k*(N+1)+N]) );
+            if(ABS(hv_XFlux_num[i][Nex-1][k*(N+1)+N])>1e-8)
+                printf("Danda3\n");
+
+        }
     }
 
-    /***
-    * Uncomment these lines only for periodic Boundary Conditions.
     i=0;
     for(j=0;j<Nex;j++)
     {
         for(k=0;k<=N;k++)
         {
             eta_YFlux_num[Ney-1][j][k + N*(N+1)]    =   eta_YFlux_num[i][j][k]  =   0.5*(eta_YFlux[i][j][k] + eta_YFlux[Ney-1][j][k + N*(N+1)] - (MAX((ABS(v[i][j][k])+sqrt(G*(eta[i][j][k]))),(ABS(v[Ney-1][j][k + N*(N+1)])+sqrt(G*(eta[Ney-1][j][k + N*(N+1)])))))*(eta[i][j][k] - eta[Ney-1][j][k + N*(N+1)]) );
+            if(ABS(eta_YFlux_num[Ney-1][j][k + N*(N+1)])>1e-8)
+                printf("Danda4\n");
 
             hu_YFlux_num[Ney-1][j][k + N*(N+1)]    =    hu_YFlux_num[i][j][k]   =   0.5*(hu_YFlux[i][j][k] + hu_YFlux[Ney-1][j][k + N*(N+1)] - (MAX((ABS(v[i][j][k])+sqrt(G*(eta[i][j][k]))),(ABS(v[Ney-1][j][k + N*(N+1)])+sqrt(G*(eta[Ney-1][j][k + N*(N+1)])))))*(hu[i][j][k] - hu[Ney-1][j][k + N*(N+1)]) );
+            if(ABS(hu_YFlux_num[Ney-1][j][k + N*(N+1)])>1e-8)
+                printf("Danda5\n");
 
             hv_YFlux_num[Ney-1][j][k + N*(N+1)]    =    hv_YFlux_num[i][j][k]   =   0.5*(hv_YFlux[i][j][k] + hv_YFlux[Ney-1][j][k + N*(N+1)] - (MAX((ABS(v[i][j][k])+sqrt(G*(eta[i][j][k]))),(ABS(v[Ney-1][j][k + N*(N+1)])+sqrt(G*(eta[Ney-1][j][k + N*(N+1)])))))*(hv[i][j][k] - hv[Ney-1][j][k + N*(N+1)]) );
+            if(ABS((hv_YFlux_num[Ney-1][j][k + N*(N+1)])-(hv_YFlux[Ney-1][j][k + N*(N+1)]+(ABS(v[Ney-1][j][k + N*(N+1)])+sqrt(G*(eta[Ney-1][j][k + N*(N+1)])))*(hv[Ney-1][j][k + N*(N+1)])))>1e-8)
+                printf("Final Danda\n");
+            if(ABS((hv_YFlux_num[Ney-1][j][k + N*(N+1)])-(hv_YFlux[i][j][k]-(ABS(v[i][j][k])+sqrt(G*(eta[i][j][k])))*(hv[i][j][k])))>1e-8)
+                printf("Sorry this is really Final Danda\n");
+
 
         }
-    }
-    */
+    } // Periodic Boundary Conditions end here.
+*/
 
-    /**
-     * The lines below denote the conditions for the Bath-Tub Model Boundary Conditions.
-     */
-    i=0;
-    for(j=0;j<Nex;j++)
-    {
-        for(k=0;k<=N;k++)
-        {
-            eta_YFlux_num[i][j][k]                  =   0;
-            eta_YFlux_num[Ney-1][j][k + N*(N+1)]    =   0;
+   //Writing the Boundary Conditions for the Bath-Tub model.
+   //Bath - Tub Model X-flux conditions.
+   j=0;
+   for(i=0;i<Ney;i++)
+   {
+       for(k=0;k<=N;k++)
+       {
+           eta_XFlux_num[i][Nex-1][k*(N+1)+N]   =   0.0 ;
+           eta_XFlux_num[i][j][k*(N+1)]         =   0.0 ;
 
-            hu_YFlux_num[i][j][k]                   =   0;
-            hu_YFlux_num[Ney-1][j][k + N*(N+1)]     =   0;
+           hu_XFlux_num[i][Nex-1][k*(N+1)+N]    =   hu_XFlux[i][Nex-1][k*(N+1) + N]+(ABS(u[i][Nex-1][k*(N+1) + N])+sqrt(G*(eta[i][Nex-1][k*(N+1) + N])))*(hu[i][Nex-1][k*(N+1)+N]);
+           hu_XFlux_num[i][j][k*(N+1)]          =   hu_XFlux[i][j][k*(N+1)]-(ABS(u[i][j][k*(N+1)])+sqrt(G*(eta[i][j][k*(N+1)])))*(hu[i][j][k*(N+1)]);
 
-            hv_YFlux_num[i][j][k]                   =   0;
-            hv_YFlux_num[Ney-1][j][k + N*(N+1)]     =   0;
-        }
-    }/*The Bath-Tub Model Coundary Conditions End.*/
+           hv_XFlux_num[i][Nex-1][k*(N+1)+N]    =   0.0;
+           hv_XFlux_num[i][j][k*(N+1)]          =   0.0 ;
+       }
+   }
+
+   //Bath - Tub Model Y- flux conditions.
+   i=0;
+   for(j=0;j<Nex;j++)
+   {
+       for(k=0;k<=N;k++)
+       {
+           eta_YFlux_num[Ney-1][j][k + N*(N+1)] =   0.0;
+           eta_YFlux_num[i][j][k]               =   0.0;
+
+           hu_YFlux_num[Ney-1][j][k + N*(N+1)]  =   0.0;
+           hu_YFlux_num[i][j][k]                =   0.0;
+
+           hv_YFlux_num[Ney-1][j][k + N*(N+1)]  =   hv_YFlux[Ney-1][j][k + N*(N+1)]+(ABS(v[Ney-1][j][k + N*(N+1)])+sqrt(G*(eta[Ney-1][j][k + N*(N+1)])))*(hv[Ney-1][j][k + N*(N+1)]);
+           hv_YFlux_num[i][j][k]                =   hv_YFlux[i][j][k]-(ABS(v[i][j][k])+sqrt(G*(eta[i][j][k])))*(hv[i][j][k]);
+       }
+   }
+   
     return ;
 }
 
 /**
  * This function operates the Derivative Matrix on the flux terms of the conservative variables, and gets added in the RHS. Here BLAS and LAPACK functions have been used here for performing the linear operations.
  */
-void ShallowWater::operateDerivative( )
+void ShallowWater::operateDerivative()
 {
     unsigned i,j;
 
@@ -614,7 +631,6 @@ void ShallowWater::RK3()
             cblas_daxpy((N+1)*(N+1),dt,hv_Rate[i][j],1,hv[i][j],1);
         }
     updateVelocities();
-
     computeRHS();
     computeFlux();
     computeNumericalFlux();

@@ -14,7 +14,7 @@
 #include "../Elemental/FluxMatrix.hpp"
 
 #define MAX(a, b)(a>b?a:b)
-#define ABS(a)(a>0?a:(-a))
+#define ABS(a)(a>0.0?a:(-a))
 
 using namespace std;
 
