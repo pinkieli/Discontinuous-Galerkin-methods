@@ -106,6 +106,7 @@ public:
     void updateVelocities();
     void solve();
     void plotSolution(double , double ,string );
+    void plotBoundary(double , double , string);
 };
 
 ShallowWater::ShallowWater(unsigned Nx, unsigned Ny, unsigned n)
@@ -503,7 +504,7 @@ void ShallowWater::computeNumericalFlux( )
            hv_YFlux_num[i][j][k]                =   hv_YFlux[i][j][k]-(ABS(v[i][j][k])+sqrt(G*(eta[i][j][k])))*(hv[i][j][k]);
        }
    }
-   
+
     return ;
 }
 
@@ -838,6 +839,39 @@ void ShallowWater::plotSolution(double Z1, double Z2, string s)
     }
 
     plot(*CGX,*CGY,*CG,Ney*N+1,Nex*N+1,L_start,L_end,H_start,H_end,Z1,Z2,s);
+
+    return ;
+}
+
+void ShallowWater::plotBoundary(double Y1, double Y2, string outputFilename)
+{
+    double CGX[Nex*N+1],CGY[Nex*N+1] ;
+    zeros(CGX,Nex*N+1);
+    zeros(CGY,Nex*N+1);
+    unsigned j,k;
+
+    for(j=0;j<Nex;j++)
+    {
+        k=0;
+        CGY[j*N+k]+=0.5*eta[0][j][k];
+        CGX[j*N+k]+=0.5*X[0][j][k];
+        for(k=1;k<N;k++)
+        {
+            CGY[j*N+k]+=eta[0][j][k];
+            CGX[j*N+k]+=X[0][j][k];
+        }
+
+        k=N;
+        CGY[j*N+k]+=0.5*eta[0][j][k];
+        CGX[j*N+k]+=0.5*X[0][j][k];
+    }
+
+    CGY[0]  =   2*CGY[0];
+    CGY[Nex*N]=  2*CGY[Nex*N];
+    CGX[0]  =   2*CGX[0];
+    CGX[Nex*N]=  2*CGX[Nex*N];
+
+    plot(CGX,CGY,Nex*N+1,Y1,Y2,"Shallow Water","Water Height",outputFilename);
 
     return ;
 }
