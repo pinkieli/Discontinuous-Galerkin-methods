@@ -1,4 +1,4 @@
-	#include <lapacke.h>
+#include <lapacke.h>
 #include <functional>
 #include <cstring>
 #include <cblas.h>
@@ -72,7 +72,8 @@ private:
 
     /**
     * In- class created variables the variables ahead have no physical significance, just are defined as function properties so as to faciliate the transmission of data from one member function to the another.
-    * Lambda   =   The max of absolute value of the eigen value. It is used for compiuting the Rusanov Flux.
+    * Lambda    =   The max of absolute value of the eigen value. It is used for compiuting the Rusanov Flux.
+    * time      =   The current time step of the Solver.
     */
     double ***eta_RHS,***hu_RHS,***hv_RHS;
     double ***eta_Rate,***hu_Rate,***hv_Rate;
@@ -80,6 +81,7 @@ private:
     double ***eta_XFlux_num,***eta_YFlux_num,***hu_XFlux_num,***hu_YFlux_num,***hv_XFlux_num,***hv_YFlux_num;
     double dx,dy;
     double Lambda;
+    double time;
 
     /**
     *   The matrices which will be used for solution methodology purposes.
@@ -107,6 +109,7 @@ public:
     void solve();
     void plotSolution(double , double ,string );
     void plotBoundary(double , double , string);
+    void writeVTK(string );
 };
 
 ShallowWater::ShallowWater(unsigned Nx, unsigned Ny, unsigned n)
@@ -120,6 +123,7 @@ ShallowWater::ShallowWater(unsigned Nx, unsigned Ny, unsigned n)
     Nex =   Nx;
     Ney =   Ny;
     N   =   n;
+    time =  0.0;
 
     /**
     * The memory allocation for all the 3-d/ 2-d array is being done.
@@ -679,14 +683,16 @@ void ShallowWater::RK3()
     return ;
 }
 
+
 void ShallowWater::solve()
 {
     unsigned t;
 
     for(t=0;t<NTimeSteps;t++)
     {
-        printf("Time t=%6.3f\tCourant Number=%6.2f\n",(t+1.0)*dt,Lambda*dt*(1.0/dy+1.0/dx) );
+        fprintf(stderr,"Time t=%6.3f\tCourant Number=%6.2f\n",time,Lambda*dt*(1.0/dy+1.0/dx) );
         RK3();
+        time += dt;
     }
 
     return ;
@@ -873,6 +879,71 @@ void ShallowWater::plotBoundary(double Y1, double Y2, string outputFilename)
 
     plot(CGX,CGY,Nex*N+1,Y1,Y2,"Shallow Water","Water Height",outputFilename);
 
+    return ;
+}
+
+/**
+  * Writing the `eta` to VTK files.
+  * I am currently going to interpret the field to be of Unstructed_Grid Form of the VTK file formats.
+  */
+void ShallowWater::writeVTK(string outputFilename)
+{
+    unsigned i,j,k,k1,k2;
+    FILE* pfile;
+    pfile   =   freopen(outputFilename.c_str(),"w",stdout);
+
+    // Starting the .vtk files with the cmpulsory field values.
+    fprintf(pfile,"# vtk DataFile Version 3.0\nShallow Water\nASCII\nDATASET UNSTRUCTURED_GRID\n");
+
+    // The information of the points.
+    fprintf(pfile,"POINTS\t%d\tfloat\n",(N+1)*(N+1)*Nex*Ney);
+
+    // Writing the points and the values.
+    for ( i = 0; i < Ney; i++ )
+        for ( j = 0; j < Nex; j++ )
+            for( k = 0; k < (N+1)*(N+1); k++ )
+                fprintf(pfile,"%.3f\t%.3f\t%.3f\n",X[i][j][k],Y[i][j][k],eta[i][j][k]);
+
+    fprintf(pfile,"\n\n");
+
+    // Specifying the information about the CELLS.
+    fprintf(pfile,"CELLS\t%u\t%u\n",(N*N*Nex*Ney),5*(N*N*Nex*Ney));
+
+    // Starting writing information about the cells.
+    for ( i = 0; i < Ney; i++ )
+    {
+        for ( j = 0; j < Nex; j++ )
+        {
+            for( k1 = 0; k1 < N; k1++ )
+            {
+                for ( k2 = 0; k2 < N; k2++ )
+                {
+                    k   =   (i*Nex+j)*(N+1)*(N+1) +   k1*(N+1)    +   k2;
+                    fprintf(pfile,"%u\t%u\t%u\t%u\t%u\n",4,k,k+1,k+N+2,k+N+1);
+                }
+            }
+        }
+    }
+    fprintf(pfile,"\n\n");
+
+    // Specifying the information about the CELL TYPES.
+    fprintf(pfile,"CELL_TYPES %u\n",(N*N*Nex*Ney));
+
+    // `9` is the CELL TYPE CODE for specifying that it is a quad.
+    for ( i = 0; i < (N*N*Nex*Ney); i++)
+        fprintf(pfile,"9\n");
+    fprintf(pfile,"\n\n");
+
+    // Specifying the information about the POINT_DATA
+    fprintf(pfile,"POINT_DATA\t%u\nSCALARS\tEta\tfloat\nLOOKUP_TABLE default\n", (N+1)*(N+1)*Nex*Ney);
+
+    // Writing the value of the POINT_DATA . In this case `eta`.
+    for ( i = 0; i < Ney; i++ )
+        for ( j = 0; j < Nex; j++ )
+            for( k = 0; k < (N+1)*(N+1); k++ )
+                fprintf(pfile,"%.3f\n",eta[i][j][k]);
+
+    fclose(pfile);
     return ;
 }
 
