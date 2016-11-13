@@ -19,6 +19,10 @@
 
 (Click on the above image to view the video)
 
+* **The solver has been verified for simple advection problem.**. The following image decribes it. A discontinuous inital condition had been used.
+[![Solution using N = 4](http://i.imgur.com/IOULEkS.jpg)](http://i.imgur.com/IOULEkS.jpg)
+
+
 ## License
 
 You can find all the details over here [LICENSE](https://github.com/kaushikcfd/Discontinuous-Galerkin/blob/master/LICENSE.md).
